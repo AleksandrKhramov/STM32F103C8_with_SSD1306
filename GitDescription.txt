@@ -1,3 +1,5 @@
 1) В корневой папке команда git init
-2) Добавляем файлы git add . - вся папка, git add somename.c - какой-то файлы
+2) Добавляем файлы git add . - вся папка, git add somename.c - какой-то файлы, git add  *.c - файлы с расширением  .c, git add Code/* - все файлы из папки Code, 
+git add Code/*.c - все файлы с расширением .c из папки Code, git add Code/**/*.c - все файлы с расширением .c из папки Code и всех дочерних папок,
+git add !Code/somename.c - все файлы из папки Code кроме файла somename.c  
 3) git commit -m "comment"
