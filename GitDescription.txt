@@ -4,3 +4,4 @@ git add Code/*.c - все файлы с расширением .c из папк�
 git add !Code/somename.c - все файлы из папки Code кроме файла somename.c  
 3) git commit -m "comment"
 4) git log или git log --oneline - отображение изменений 
+
