@@ -44,6 +44,8 @@ void RCC_Init(void)
 {
 //Description on 13:30 of third lesson
 	
+	
+	
 //Clock control register settings
 	
 	RCC->CR |= ((uint32_t)RCC_CR_HSEON); 												// Enable HSE   							/*!< External High Speed clock enable */
