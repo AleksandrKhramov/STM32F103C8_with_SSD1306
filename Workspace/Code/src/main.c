@@ -24,7 +24,7 @@ int main()
 {
 	//RCC_Init();
 	GPIO_Init();
-	MCO_out();
+	//MCO_out();
 	SPI1_Init();
 
 	xTaskCreate(vTaskLed, "LED1", 32, NULL, 1, NULL);
