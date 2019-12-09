@@ -33,18 +33,13 @@ int main()
 	
 	while(1)
 	{
-		//GPIOA->BSRR |= GPIO_BSRR_BS9;//Set 9-th pin to 1
-		//delay(10);						//task sleep
-		//GPIOA->BSRR |= GPIO_BSRR_BR9;//Set 9-th pin to 0
-		//delay(10);	
+
 	}
 }
 //*************************************************************************************************
 void RCC_Init(void)
 {
-//Description on 13:30 of third lesson
-	
-	
+//Description on 13:30 of third lesson	
 	
 //Clock control register settings
 	
@@ -239,9 +234,3 @@ void vTaskLed(void *argument)
 	}
 }
 //*************************************************************************************************
-void delay(uint32_t time){
-		
-	uint32_t i;
-	for(i = 0; i < time; i++){
-	}
-}
