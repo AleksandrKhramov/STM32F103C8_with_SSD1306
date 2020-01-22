@@ -213,7 +213,7 @@ void SPI1_IRQHandler(void)
 //-----------------------------------------------------------------------------------------
 void SPI1_Write(uint16_t data)
 {
-	GPIOA->BSRR |= GPIO_BSRR_BS9;//Set 9-th pin to 1
+	GPIOA->BSRR |= GPIO_BSRR_BR9;//Set 9-th pin to 0
   //Ждем, пока не освободится буфер передатчика
   while(!(SPI1->SR & SPI_SR_TXE))
     ;
@@ -222,7 +222,8 @@ void SPI1_Write(uint16_t data)
   SPI1->DR = data;
 	
 	for(volatile int i = 0; i < 10; ++i){;}
-	GPIOA->BSRR |= GPIO_BSRR_BR9;//Set 9-th pin to 0
+	
+	GPIOA->BSRR |= GPIO_BSRR_BS9;//Set 9-th pin to 1
 }
 //*************************************************************************************************
 void vTaskLed(void *argument)
