@@ -14,7 +14,7 @@ void SPI1_Init(void);
 void SPI1_Write(uint16_t data);
 
 //User functions
-	
+void SSD1306_Init(void);
 
 //FreeRTOS tasks
 void vTaskLed(void *argument);
@@ -26,6 +26,7 @@ int main()
 	GPIO_Init();
 	//MCO_out();
 	SPI1_Init();
+	SSD1306_Init();
 
 	xTaskCreate(vTaskLed, "LED1", 32, NULL, 1, NULL);
 
@@ -212,26 +213,67 @@ void SPI1_IRQHandler(void)
 //-----------------------------------------------------------------------------------------
 void SPI1_Write(uint16_t data)
 {
+	GPIOA->BSRR |= GPIO_BSRR_BS9;//Set 9-th pin to 1
   //Ждем, пока не освободится буфер передатчика
   while(!(SPI1->SR & SPI_SR_TXE))
     ;
 	
   //заполняем буфер передатчика
   SPI1->DR = data;
+	
+	for(volatile int i = 0; i < 10; ++i){;}
+	GPIOA->BSRR |= GPIO_BSRR_BR9;//Set 9-th pin to 0
 }
 //*************************************************************************************************
 void vTaskLed(void *argument)
 {
 	while(1)
 	{
-		GPIOA->BSRR |= GPIO_BSRR_BS9;//Set 9-th pin to 1
+		
+		/*GPIOA->BSRR |= GPIO_BSRR_BS9;//Set 9-th pin to 1
 		SPI1_Write('A');
 		SPI1_Write('B');
 		SPI1_Write('C');
 		SPI1_Write('D');
 		vTaskDelay(500);							//task sleep
-		GPIOA->BSRR |= GPIO_BSRR_BR9;//Set 9-th pin to 0
+		GPIOA->BSRR |= GPIO_BSRR_BR9;//Set 9-th pin to 0*/
 		vTaskDelay(500);	
 	}
 }
 //*************************************************************************************************
+void SSD1306_Init(void)
+{
+			//GPIOA->BSRR |= GPIO_BSRR_BR9;//Set 9-th pin to 0
+			
+			//need reset to 0
+			//R/W already zero 
+			//CS already zero 
+	
+			SPI1_Write(0xAE);
+			SPI1_Write(0xAD);
+			SPI1_Write(0x8E);
+			SPI1_Write(0xA8);
+			SPI1_Write(0x3F);
+			SPI1_Write(0xD3);
+			SPI1_Write(0x00);
+			SPI1_Write(0x40);
+			SPI1_Write(0xA0);
+			SPI1_Write(0xA4);
+			SPI1_Write(0xA6);
+			SPI1_Write(0xDB);
+			SPI1_Write(0xFF);
+			SPI1_Write(0x81);
+			SPI1_Write(0xFF);
+			SPI1_Write(0xD5);
+			SPI1_Write(0x00);
+			SPI1_Write(0xC0);
+			SPI1_Write(0xDA);
+			SPI1_Write(0x12);
+			SPI1_Write(0xD9);
+			SPI1_Write(0xFF);
+			SPI1_Write(0xAF);
+			
+			//GPIOA->BSRR |= GPIO_BSRR_BS9;//Set 9-th pin to 1
+}
+//------------------------------------------------------------------------------------------
+
