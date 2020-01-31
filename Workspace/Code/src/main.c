@@ -201,7 +201,7 @@ void SPI1_Write(uint8_t *pBuff, uint16_t BuffLen)
 		while(!(SPI1->SR & SPI_SR_TXE)) ;	
 		//Send data
 		SPI1->DR = pBuff[i];
-
+		//Delay caused display MCU handing ability
 		DelayMicro(7);
 	}	
 }
@@ -215,7 +215,7 @@ void SPI1_Write(uint8_t *pBuff, uint16_t BuffLen)
 		GPIOC->BSRR |= GPIO_BSRR_BR9;//Set 9-th pin to 0
 		vTaskDelay(1000);
 	}
-}
+}*/
 //*************************************************************************************************
 //------------------------------------------------------------------------------------------
 void DelayMicro(uint32_t time)
@@ -229,11 +229,10 @@ void delay_ms(uint32_t time)
 	DelayMicro(1000*time);
 }
 //------------------------------------------------------------------------------------------
-void delay(uint32_t time){
-		
+void delay(uint32_t time)
+{		
 	uint32_t i;
-	for(i = 0; i < time; i++){
-	}
+	for(i = 0; i < time; i++){}
 }
 //------------------------------------------------------------------------------------------
 

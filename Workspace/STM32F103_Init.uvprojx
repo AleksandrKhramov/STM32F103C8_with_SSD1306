@@ -338,7 +338,7 @@
               <MiscControls></MiscControls>
               <Define></Define>
               <Undefine></Undefine>
-              <IncludePath>..\Workspace;.\CMSIS\inc;.\Code\inc;.\FreeRTOS\inc</IncludePath>
+              <IncludePath>..\Workspace;.\CMSIS\inc;.\Code\inc;.\FreeRTOS\inc;.\display;.\display\fonts;.\SSD1306\inc</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -466,6 +466,41 @@
               <FileName>croutine.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\FreeRTOS\src\croutine.c</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>Display</GroupName>
+          <Files>
+            <File>
+              <FileName>disp1color.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\display\disp1color.c</FilePath>
+            </File>
+            <File>
+              <FileName>f6x8m.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\display\fonts\f6x8m.c</FilePath>
+            </File>
+            <File>
+              <FileName>f10x16f.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\display\fonts\f10x16f.c</FilePath>
+            </File>
+            <File>
+              <FileName>font.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\display\fonts\font.c</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>SSD1306</GroupName>
+          <Files>
+            <File>
+              <FileName>SSD1306.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\SSD1306\src\SSD1306.c</FilePath>
             </File>
           </Files>
         </Group>
