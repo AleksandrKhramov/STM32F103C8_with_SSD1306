@@ -6,6 +6,7 @@
 #include "SSD1306.h"
 #include "disp1color.h"
 #include "font.h"
+#include "state.h"
 
 
 #define SEL_RECT_L                  10

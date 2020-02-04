@@ -9,13 +9,6 @@ C - 1100 - X
 
 #include "main.h"
 
-bool LeftBtn = false;
-bool RightBtn = false;
-bool UpBtn = false;
-bool DownBtn = false;
-bool EnterBtn = false;
-bool ClearBtn = false;
-
 bool Mode_Rectangle = false;
 
 int main()
@@ -24,6 +17,9 @@ int main()
 	GPIO_Init();
 	SPI1_Init();	
 	SSD1306_Init();	
+	
+	ResetState();
+	
 	
 	while(1)
 	{
@@ -237,15 +233,6 @@ void SPI1_Write(uint8_t *pBuff, uint16_t BuffLen)
 	}	
 }
 //*************************************************************************************************
-/*void vTaskTempRequest(void *argument)
-{
-	while(1)
-	{
-		GPIOC->BSRR |= GPIO_BSRR_BS13;
-		vTaskDelay(200);
-	}
-}*/
-//------------------------------------------------------------------------------------------
 void vTaskUpdatedisplay(void *argument)
 {
 	while(1)
@@ -289,50 +276,11 @@ void vTaskUpdatedisplay(void *argument)
 	}
 }
 //------------------------------------------------------------------------------------------
-/*void vTaskButtons(void *argument)
-{
-	while(1)
-	{
-		if((GPIOA->IDR & GPIO_IDR_IDR8) != 0)	
-			LeftBtn = true;
-		else
-			LeftBtn = false;
-
-		if((GPIOA->IDR & GPIO_IDR_IDR9) != 0)	
-			RightBtn = true;
-		else
-			RightBtn = false;
-
-		if((GPIOA->IDR & GPIO_IDR_IDR10) != 0)	
-			UpBtn = true;
-		else
-			UpBtn = false;
-
-		if((GPIOA->IDR & GPIO_IDR_IDR11) != 0)	
-			DownBtn = true;
-		else
-			DownBtn = false;
-
-		if((GPIOA->IDR & GPIO_IDR_IDR12) != 0)	
-			EnterBtn = true;
-		else
-			EnterBtn = false;
-
-		if((GPIOA->IDR & GPIO_IDR_IDR15) != 0)	
-			ClearBtn = true;
-		else
-			ClearBtn = false;
-
-		vTaskDelay(200);
 
 		if(LeftBtn)
 			GPIOC->BSRR |= GPIO_BSRR_BS13;
 		else
 			GPIOC->BSRR |= GPIO_BSRR_BR13;
-		
-		
-	}
-}*/
 
 //*************************************************************************************************
 //------------------------------------------------------------------------------------------
