@@ -2,19 +2,16 @@
 #define mainH
 
 #include "stm32f10x.h"
-//#include "FreeRTOS.h"
-//#include "task.h"
-//#include "queue.h"
 #include "stdbool.h"
 #include "SSD1306.h"
 #include "disp1color.h"
 #include "font.h"
 
 
-#define SEL_RECT_L               10
-#define SEL_RECT_T                16
-#define MODE_RECT_L               3
-#define MODE_RECT_T                3
+#define SEL_RECT_L                  10
+#define SEL_RECT_T                  16
+#define MODE_RECT_L                 3
+#define MODE_RECT_T                 3
 
 
 //Initialization functions
@@ -30,12 +27,9 @@ void delay(uint32_t time);
 void DelayMicro(uint32_t time);
 void delay_ms(uint32_t time);
 	
-
 //Common purpose functions
 
 //SSD1306 functions
 void SSD1306_GPIO_init(void);
 
-//FreeRTOS tasks
-//void vTaskLed(void *argument);
 #endif

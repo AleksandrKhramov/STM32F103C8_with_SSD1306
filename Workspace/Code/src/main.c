@@ -9,15 +9,21 @@ C - 1100 - X
 
 #include "main.h"
 
+bool LeftBtn = false;
+bool RightBtn = false;
+bool UpBtn = false;
+bool DownBtn = false;
+bool EnterBtn = false;
+bool ClearBtn = false;
+
+bool Mode_Rectangle = false;
+
 int main()
 {
+	RCC_Init();
 	GPIO_Init();
-	SPI1_Init();
-	SSD1306_GPIO_init();
-
-	//xTaskCreate(vTaskLed, "LED1", 32, NULL, 1, NULL);
-
-	//vTaskStartScheduler();
+	SPI1_Init();	
+	SSD1306_Init();	
 	
 	while(1)
 	{
@@ -105,9 +111,34 @@ void RCC_Init(void)
 void GPIO_Init(void)
 {
 	RCC->APB2ENR |= RCC_APB2ENR_IOPAEN;                       	// enable clock for port A
+	RCC->APB2ENR |= RCC_APB2ENR_IOPCEN;                       	// enable clock for port C
 	
-	GPIOA->CRH &= ~GPIO_CRH_CNF9;				//
-	GPIOA->CRH |= GPIO_CRH_MODE9_0;			//
+	GPIOC->CRH &= ~GPIO_CRH_CNF13;				
+	GPIOC->CRH |= GPIO_CRH_MODE13_0;			
+
+	//Left button
+	GPIOA->CRH &= ~GPIO_CRH_CNF8;				
+	GPIOA->CRH &= ~GPIO_CRH_MODE8;
+
+	//Right button
+	GPIOA->CRH &= ~GPIO_CRH_CNF9;				
+	GPIOA->CRH &= ~GPIO_CRH_MODE9;
+
+	//Up button
+	GPIOA->CRH &= ~GPIO_CRH_CNF10;				
+	GPIOA->CRH &= ~GPIO_CRH_MODE10;
+
+	//Down button
+	GPIOA->CRH &= ~GPIO_CRH_CNF11;				
+	GPIOA->CRH &= ~GPIO_CRH_MODE11;
+
+	//Enter button
+	GPIOA->CRH &= ~GPIO_CRH_CNF12;				
+	GPIOA->CRH &= ~GPIO_CRH_MODE12;
+
+	//Clear button
+	GPIOA->CRH &= ~GPIO_CRH_CNF15;				
+	GPIOA->CRH &= ~GPIO_CRH_MODE15;
 }
 //------------------------------------------------------------------------------------------
 void SPI1_Init(void)
@@ -206,16 +237,103 @@ void SPI1_Write(uint8_t *pBuff, uint16_t BuffLen)
 	}	
 }
 //*************************************************************************************************
-/*void vTaskLed1(void *argument)
+/*void vTaskTempRequest(void *argument)
 {
 	while(1)
 	{
-		GPIOC->BSRR |= GPIO_BSRR_BS9;//Set 9-th pin to 1	
-		vTaskDelay(1000);							//task sleep
-		GPIOC->BSRR |= GPIO_BSRR_BR9;//Set 9-th pin to 0
-		vTaskDelay(1000);
+		GPIOC->BSRR |= GPIO_BSRR_BS13;
+		vTaskDelay(200);
 	}
 }*/
+//------------------------------------------------------------------------------------------
+void vTaskUpdatedisplay(void *argument)
+{
+	while(1)
+	{	
+
+		//GPIOC->BSRR |= GPIO_BSRR_BS13;
+		vTaskDelay(500);
+		disp1color_FillScreenbuff(0);
+		
+		disp1color_printf(0, 1, FONTID_6X8M,  "             Готов  к  работе\n\r");
+		disp1color_printf(118, 1, FONTID_6X8M, "%c", 0x81);
+
+		//disp1color_printf(0, 1, FONTID_6X8M,  "             Выход  на  режим\n\r");
+		//disp1color_printf(118, 1, FONTID_6X8M, "x");
+
+		disp1color_DrawLine(0, 10, 127, 10);
+		disp1color_printf(28, 23, FONTID_10X16F, "32.537 %cC", 0x80);
+		disp1color_DrawLine(0, 54, 127, 54);
+
+		disp1color_printf(43, 57, FONTID_6X8M, "R1: 0.001044 Ом");  
+
+		disp1color_DrawLine(34, 59, 36, 57);
+		disp1color_DrawLine(36, 57, 38, 59);
+		disp1color_DrawLine(37, 59, 35, 59);
+
+		disp1color_DrawLine(34, 61, 36, 63);
+		disp1color_DrawLine(36, 63, 38, 61);
+		disp1color_DrawLine(37, 61, 35, 61);
+
+		if(Mode_Rectangle)
+			disp1color_DrawRectangle(MODE_RECT_L - 1, MODE_RECT_T - 1, MODE_RECT_L + 3, MODE_RECT_T + 3);	
+		else
+			disp1color_DrawRectangle(MODE_RECT_L, MODE_RECT_T, MODE_RECT_L + 2, MODE_RECT_T + 2);
+
+		disp1color_UpdateFromBuff();
+
+		Mode_Rectangle = !Mode_Rectangle;
+
+		//GPIOC->BSRR |= GPIO_BSRR_BR13;
+		vTaskDelay(500);
+	}
+}
+//------------------------------------------------------------------------------------------
+/*void vTaskButtons(void *argument)
+{
+	while(1)
+	{
+		if((GPIOA->IDR & GPIO_IDR_IDR8) != 0)	
+			LeftBtn = true;
+		else
+			LeftBtn = false;
+
+		if((GPIOA->IDR & GPIO_IDR_IDR9) != 0)	
+			RightBtn = true;
+		else
+			RightBtn = false;
+
+		if((GPIOA->IDR & GPIO_IDR_IDR10) != 0)	
+			UpBtn = true;
+		else
+			UpBtn = false;
+
+		if((GPIOA->IDR & GPIO_IDR_IDR11) != 0)	
+			DownBtn = true;
+		else
+			DownBtn = false;
+
+		if((GPIOA->IDR & GPIO_IDR_IDR12) != 0)	
+			EnterBtn = true;
+		else
+			EnterBtn = false;
+
+		if((GPIOA->IDR & GPIO_IDR_IDR15) != 0)	
+			ClearBtn = true;
+		else
+			ClearBtn = false;
+
+		vTaskDelay(200);
+
+		if(LeftBtn)
+			GPIOC->BSRR |= GPIO_BSRR_BS13;
+		else
+			GPIOC->BSRR |= GPIO_BSRR_BR13;
+		
+		
+	}
+}*/
+
 //*************************************************************************************************
 //------------------------------------------------------------------------------------------
 void DelayMicro(uint32_t time)

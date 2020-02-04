@@ -26,7 +26,7 @@ void disp1color_DrawLine(int16_t x1, int16_t y1, int16_t x2, int16_t y2);
 // Процедура рисует прямоугольник в буфере кадра дисплея
 void disp1color_DrawRectangle(int16_t x1, int16_t y1, int16_t x2, int16_t y2);
 // Процедура рисует окружность в буфере кадра дисплея. x0 и y0 - координаты центра окружности
-void disp1color_DrawCircle(int16_t x0, int16_t y0, int16_t radius);
+//void disp1color_DrawCircle(int16_t x0, int16_t y0, int16_t radius);
 
 // Функция вывода символа Char на дисплей. Возвращает ширину выведенного символа
 uint8_t disp1color_DrawChar(uint8_t X, uint8_t Y, uint8_t FontID, uint8_t Char);

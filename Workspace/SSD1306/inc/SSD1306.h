@@ -17,7 +17,14 @@
     #define SSD1306_CS_HIGH();                  GPIOA->BSRR |= GPIO_BSRR_BS2;
     #define SSD1306_CS_LOW();                   GPIOA->BSRR |= GPIO_BSRR_BR2;  
 #elif STM32F103
-    #error Требуется реализовать
+    #define SSD1306_RESET_HIGH();               GPIOA->BSRR |= GPIO_BSRR_BS3;
+    #define SSD1306_RESET_LOW();                GPIOA->BSRR |= GPIO_BSRR_BR3;
+
+    #define SSD1306_DC_HIGH();                  GPIOA->BSRR |= GPIO_BSRR_BS1;
+    #define SSD1306_DC_LOW();                   GPIOA->BSRR |= GPIO_BSRR_BR1;
+
+    #define SSD1306_CS_HIGH();                  GPIOA->BSRR |= GPIO_BSRR_BS2;
+    #define SSD1306_CS_LOW();                   GPIOA->BSRR |= GPIO_BSRR_BR2; 
 #else
     #error Требуется выбрать контроллер
 #endif
@@ -119,8 +126,6 @@ void SSD1306_SetCOMPinsConfig(uint8_t AltCOMpinConfig, uint8_t LeftRightRemap);
 void SSD1306_SetPrechargePeriod(uint8_t Phase1period, uint8_t Phase2period);
 void SSD1306_SetVCOMHDeselectLevel(uint8_t Code);
 void SSD1306_DeactivateScroll(void);
-
-
 
 #endif
 
