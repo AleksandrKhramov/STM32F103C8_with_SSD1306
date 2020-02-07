@@ -18,15 +18,50 @@ int main()
 	SPI1_Init();	
 	SSD1306_Init();	
 	
-	ResetState();
+	//ResetState();
 	
 	
 	while(1)
 	{
+		//GPIOC->BSRR |= GPIO_BSRR_BS13;
+		delay_ms(200);
+		disp1color_FillScreenbuff(0);
+		
+		disp1color_printf(0, 1, FONTID_6X8M,  "             Готов  к  работе\n\r");
+		disp1color_printf(118, 1, FONTID_6X8M, "%c", 0x81);
 
+		//disp1color_printf(0, 1, FONTID_6X8M,  "             Выход  на  режим\n\r");
+		//disp1color_printf(118, 1, FONTID_6X8M, "x");
+
+		disp1color_DrawLine(0, 10, 127, 10);
+		disp1color_printf(28, 23, FONTID_10X16F, "32.537 %cC", 0x80);
+		disp1color_DrawLine(0, 54, 127, 54);
+
+		disp1color_printf(43, 57, FONTID_6X8M, "R1: 0.001044 Ом");  
+
+		disp1color_DrawLine(34, 59, 36, 57);
+		disp1color_DrawLine(36, 57, 38, 59);
+		disp1color_DrawLine(37, 59, 35, 59);
+
+		disp1color_DrawLine(34, 61, 36, 63);
+		disp1color_DrawLine(36, 63, 38, 61);
+		disp1color_DrawLine(37, 61, 35, 61);
+
+		if(Mode_Rectangle)
+			disp1color_DrawRectangle(MODE_RECT_L - 1, MODE_RECT_T - 1, MODE_RECT_L + 3, MODE_RECT_T + 3);	
+		else
+			disp1color_DrawRectangle(MODE_RECT_L, MODE_RECT_T, MODE_RECT_L + 2, MODE_RECT_T + 2);
+
+		disp1color_UpdateFromBuff();
+
+		Mode_Rectangle = !Mode_Rectangle;
+
+		//GPIOC->BSRR |= GPIO_BSRR_BR13;
+		delay_ms(200);
+		//GPIOC->BSRR |= GPIO_BSRR_BR13;
 	}
 }
-//*************************************************************************************************
+//*******************************  Initialization functions  ****************************************************
 void RCC_Init(void)
 {
  //Description on 13:30 of third lesson	
@@ -106,35 +141,107 @@ void RCC_Init(void)
 //-----------------------------------------------------------------------------------------
 void GPIO_Init(void)
 {
-	RCC->APB2ENR |= RCC_APB2ENR_IOPAEN;                       	// enable clock for port A
-	RCC->APB2ENR |= RCC_APB2ENR_IOPCEN;                       	// enable clock for port C
+	RCC->APB2ENR |= RCC_APB2ENR_IOPAEN;                       	//enable clock for port A
+	RCC->APB2ENR |= RCC_APB2ENR_IOPCEN;                       	//enable clock for port C
+	RCC->APB2ENR |= RCC_APB2ENR_IOPBEN;                       	//enable clock for port B
+	RCC->APB2ENR |= RCC_APB2ENR_AFIOEN; 						//enable clock for AFIO
 	
+	//Green LED init
 	GPIOC->CRH &= ~GPIO_CRH_CNF13;				
 	GPIOC->CRH |= GPIO_CRH_MODE13_0;			
 
-	//Left button
-	GPIOA->CRH &= ~GPIO_CRH_CNF8;				
-	GPIOA->CRH &= ~GPIO_CRH_MODE8;
+	//******************************
+	//** Setting GPIO for buttons **
+	//******************************
 
+	//Left button
+	GPIOB->CRH &= ~GPIO_CRH_CNF14;					//Reset CNF register				
+	GPIOB->CRH &= ~GPIO_CRH_MODE14;					//Input mode
+	GPIOB->CRH |= GPIO_CRH_CNF14_1;					//Input with pull up/pull down
+	GPIOB->ODR &= ~GPIO_ODR_ODR14;					//Pull down	
+
+	AFIO->EXTICR[3] &= ~AFIO_EXTICR4_EXTI14;			//Channel EXTI Reset
+	AFIO->EXTICR[3] |= AFIO_EXTICR4_EXTI14_PB;		//Channel EXTI connected to PB 
+
+	EXTI->RTSR |= EXTI_RTSR_TR14;					//Rising trigger enabled for fourth channel
+	EXTI->FTSR &= ~EXTI_FTSR_TR14;					//Falling trigger disabled for fourth channel
+
+	EXTI->PR |= EXTI_PR_PR14;						//Clear interrupt flag
+	EXTI->IMR |= EXTI_IMR_MR14;						//Enable interrupt
+	
 	//Right button
-	GPIOA->CRH &= ~GPIO_CRH_CNF9;				
-	GPIOA->CRH &= ~GPIO_CRH_MODE9;
+	GPIOB->CRH &= ~GPIO_CRH_CNF15;					//Reset CNF register				
+	GPIOB->CRH &= ~GPIO_CRH_MODE15;					//Input mode
+	GPIOB->CRH |= GPIO_CRH_CNF15_1;					//Input with pull up/pull down
+	GPIOB->ODR &= ~GPIO_ODR_ODR15;					//Pull down	
+
+	AFIO->EXTICR[3] &= ~AFIO_EXTICR4_EXTI15;			//Channel EXTI Reset
+	AFIO->EXTICR[3] |= AFIO_EXTICR4_EXTI15_PB;		//Channel EXTI connected to PA 
+
+	EXTI->RTSR |= EXTI_RTSR_TR15;					//Rising trigger enabled for fourth channel
+	EXTI->FTSR &= ~EXTI_FTSR_TR15;					//Falling trigger disabled for fourth channel
+
+	EXTI->PR |= EXTI_PR_PR15;						//Clear interrupt flag
+	EXTI->IMR |= EXTI_IMR_MR15;						//Enable interrupt
 
 	//Up button
-	GPIOA->CRH &= ~GPIO_CRH_CNF10;				
-	GPIOA->CRH &= ~GPIO_CRH_MODE10;
+	GPIOA->CRH &= ~GPIO_CRH_CNF8;					//Reset CNF register		
+	GPIOA->CRH &= ~GPIO_CRH_MODE8;					//Input mode
+	GPIOA->CRH |= GPIO_CRH_CNF8_1;					//Input with pull up/pull down
+	GPIOA->ODR &= ~GPIO_ODR_ODR8;					//Pull down						
+
+	AFIO->EXTICR[2] &= ~AFIO_EXTICR3_EXTI8;			//Channel EXTI connected to PA 
+
+	EXTI->RTSR |= EXTI_RTSR_TR8;					//Rising trigger enabled for third channel
+	EXTI->FTSR &= ~EXTI_FTSR_TR8;					//Falling trigger disabled for third channel
+
+	EXTI->PR |= EXTI_PR_PR8;						//Clear interrupt flag
+	EXTI->IMR |= EXTI_IMR_MR8;						//Enable interrupt
 
 	//Down button
-	GPIOA->CRH &= ~GPIO_CRH_CNF11;				
-	GPIOA->CRH &= ~GPIO_CRH_MODE11;
+	GPIOA->CRH &= ~GPIO_CRH_CNF9;					//Reset CNF register				
+	GPIOA->CRH &= ~GPIO_CRH_MODE9;					//Input mode
+	GPIOA->CRH |= GPIO_CRH_CNF9_1;					//Input with pull up/pull down
+	GPIOA->ODR &= ~GPIO_ODR_ODR9;					//Pull down	
+
+	AFIO->EXTICR[2] &= ~AFIO_EXTICR3_EXTI9;			//Channel EXTI connected to PA 
+
+	EXTI->RTSR |= EXTI_RTSR_TR9;					//Rising trigger enabled for third channel
+	EXTI->FTSR &= ~EXTI_FTSR_TR9;					//Falling trigger disabled for third channel
+
+	EXTI->PR |= EXTI_PR_PR9;							//Clear interrupt flag
+	EXTI->IMR |= EXTI_IMR_MR9;						//Enable interrupt
 
 	//Enter button
-	GPIOA->CRH &= ~GPIO_CRH_CNF12;				
-	GPIOA->CRH &= ~GPIO_CRH_MODE12;
+	GPIOA->CRH &= ~GPIO_CRH_CNF10;					//Reset CNF register				
+	GPIOA->CRH &= ~GPIO_CRH_MODE10;					//Input mode
+	GPIOA->CRH |= GPIO_CRH_CNF10_1;					//Input with pull up/pull down
+	GPIOA->ODR &= ~GPIO_ODR_ODR10;					//Pull down	
+
+	AFIO->EXTICR[2] &= ~AFIO_EXTICR3_EXTI10;		//Channel EXTI connected to PA 
+
+	EXTI->RTSR |= EXTI_RTSR_TR10;					//Rising trigger enabled for third channel
+	EXTI->FTSR &= ~EXTI_FTSR_TR10;					//Falling trigger disabled for third channel
+
+	EXTI->PR |= EXTI_PR_PR10;						//Clear interrupt flag
+	EXTI->IMR |= EXTI_IMR_MR10;						//Enable interrupt
 
 	//Clear button
-	GPIOA->CRH &= ~GPIO_CRH_CNF15;				
-	GPIOA->CRH &= ~GPIO_CRH_MODE15;
+	GPIOA->CRH &= ~GPIO_CRH_CNF11;					//Reset CNF register				
+	GPIOA->CRH &= ~GPIO_CRH_MODE11;					//Input mode
+	GPIOA->CRH |= GPIO_CRH_CNF11_1;					//Input with pull up/pull down
+	GPIOA->ODR &= ~GPIO_ODR_ODR11;					//Pull down	
+
+	AFIO->EXTICR[2] &= ~AFIO_EXTICR3_EXTI11;		//Channel EXTI connected to PA 
+
+	EXTI->RTSR |= EXTI_RTSR_TR11;					//Rising trigger enabled for third channel
+	EXTI->FTSR &= ~EXTI_FTSR_TR11;					//Falling trigger disabled for third channel
+
+	EXTI->PR |= EXTI_PR_PR11;						//Clear interrupt flag
+	EXTI->IMR |= EXTI_IMR_MR11;						//Enable interrupt
+
+	NVIC_EnableIRQ(EXTI9_5_IRQn);
+	NVIC_EnableIRQ(EXTI15_10_IRQn);
 }
 //------------------------------------------------------------------------------------------
 void SPI1_Init(void)
@@ -189,7 +296,6 @@ void SPI1_Init(void)
 	SPI1->CR1 |= SPI_CR1_MSTR;         			//Master mode
 	
 	SPI1->CR1 |= SPI_CR1_SPE; 					//Enable SPI
-	
 }
 //-----------------------------------------------------------------------------------------
 void SSD1306_GPIO_init(void)
@@ -232,56 +338,12 @@ void SPI1_Write(uint8_t *pBuff, uint16_t BuffLen)
 		DelayMicro(7);
 	}	
 }
-//*************************************************************************************************
-void vTaskUpdatedisplay(void *argument)
-{
-	while(1)
-	{	
-
-		//GPIOC->BSRR |= GPIO_BSRR_BS13;
-		vTaskDelay(500);
-		disp1color_FillScreenbuff(0);
-		
-		disp1color_printf(0, 1, FONTID_6X8M,  "             Готов  к  работе\n\r");
-		disp1color_printf(118, 1, FONTID_6X8M, "%c", 0x81);
-
-		//disp1color_printf(0, 1, FONTID_6X8M,  "             Выход  на  режим\n\r");
-		//disp1color_printf(118, 1, FONTID_6X8M, "x");
-
-		disp1color_DrawLine(0, 10, 127, 10);
-		disp1color_printf(28, 23, FONTID_10X16F, "32.537 %cC", 0x80);
-		disp1color_DrawLine(0, 54, 127, 54);
-
-		disp1color_printf(43, 57, FONTID_6X8M, "R1: 0.001044 Ом");  
-
-		disp1color_DrawLine(34, 59, 36, 57);
-		disp1color_DrawLine(36, 57, 38, 59);
-		disp1color_DrawLine(37, 59, 35, 59);
-
-		disp1color_DrawLine(34, 61, 36, 63);
-		disp1color_DrawLine(36, 63, 38, 61);
-		disp1color_DrawLine(37, 61, 35, 61);
-
-		if(Mode_Rectangle)
-			disp1color_DrawRectangle(MODE_RECT_L - 1, MODE_RECT_T - 1, MODE_RECT_L + 3, MODE_RECT_T + 3);	
-		else
-			disp1color_DrawRectangle(MODE_RECT_L, MODE_RECT_T, MODE_RECT_L + 2, MODE_RECT_T + 2);
-
-		disp1color_UpdateFromBuff();
-
-		Mode_Rectangle = !Mode_Rectangle;
-
-		//GPIOC->BSRR |= GPIO_BSRR_BR13;
-		vTaskDelay(500);
-	}
-}
-//------------------------------------------------------------------------------------------
-
+/*
 		if(LeftBtn)
 			GPIOC->BSRR |= GPIO_BSRR_BS13;
 		else
 			GPIOC->BSRR |= GPIO_BSRR_BR13;
-
+*/
 //*************************************************************************************************
 //------------------------------------------------------------------------------------------
 void DelayMicro(uint32_t time)
@@ -299,6 +361,38 @@ void delay(uint32_t time)
 {		
 	uint32_t i;
 	for(i = 0; i < time; i++){}
+}
+//------------------------------------------------------------------------------------------
+//**********************************Interrupts handlers*************************************
+//------------------------------------------------------------------------------------------
+void EXTI9_5_IRQHandler(void)
+{
+	GPIOC->BSRR |= GPIO_BSRR_BS13;
+	EXTI->PR |= EXTI_PR_PR5; 
+	EXTI->PR |= EXTI_PR_PR6;
+	EXTI->PR |= EXTI_PR_PR8; 							//Reset interrupt
+	EXTI->PR |= EXTI_PR_PR9; 							//Reset interrupt
+	asm("nop");
+	asm("nop");
+	asm("nop");
+	asm("nop");
+	asm("nop");
+	delay_ms(500);
+  	GPIOC->BSRR |= GPIO_BSRR_BR13;
+}
+//------------------------------------------------------------------------------------------
+void EXTI15_10_IRQHandler(void)
+{
+	GPIOC->BSRR |= GPIO_BSRR_BS13;
+	EXTI->PR |= EXTI_PR_PR10; 							//Reset interrupt
+	EXTI->PR |= EXTI_PR_PR11; 							//Reset interrupt
+	asm("nop");
+	asm("nop");
+	asm("nop");
+	asm("nop");
+	asm("nop");
+	delay_ms(500);
+  	GPIOC->BSRR |= GPIO_BSRR_BR13;
 }
 //------------------------------------------------------------------------------------------
 

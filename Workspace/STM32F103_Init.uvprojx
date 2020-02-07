@@ -338,7 +338,7 @@
               <MiscControls></MiscControls>
               <Define></Define>
               <Undefine></Undefine>
-              <IncludePath>..\Workspace;.\CMSIS\inc;.\Code\inc;.\FreeRTOS\inc;.\display;.\display\fonts;.\SSD1306\inc</IncludePath>
+              <IncludePath>..\Workspace;.\CMSIS\inc;.\Code\inc;.\FreeRTOS\inc;.\display;.\display\fonts;.\SSD1306\inc;.\State\inc</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -501,6 +501,16 @@
               <FileName>SSD1306.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\SSD1306\src\SSD1306.c</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>State</GroupName>
+          <Files>
+            <File>
+              <FileName>state.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\State\src\state.c</FilePath>
             </File>
           </Files>
         </Group>
