@@ -19,6 +19,12 @@
 void GPIO_Init(void);
 void RCC_Init(void);
 void SPI1_Init(void);
+void USART3_Init(void);
+void TIM1_Init(void);
+void TIM2_Init(void);
+void TIM3_Init(void);
+void TIM4_Init(void);
+
 
 //Interconnection functions
 void SPI1_Write(uint8_t *pBuff, uint16_t BuffLen);

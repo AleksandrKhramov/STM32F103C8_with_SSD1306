@@ -1,15 +1,8 @@
-/*
-GPIO_CRL/H_CNFX
-or
-GPIO_CRL/H_MODEX
-4 - 0100 - X_0
-8 - 1000 - X_1
-C - 1100 - X
-*/
-
 #include "main.h"
 
 bool Mode_Rectangle = false;
+bool LED_En = false;
+uint32_t TriggeredNumber = 0;
 
 int main()
 {
@@ -17,9 +10,14 @@ int main()
 	GPIO_Init();
 	SPI1_Init();	
 	SSD1306_Init();	
+	USART3_Init();
+	TIM1_Init();
+	//TIM2_Init();
+	//TIM3_Init();
+	//TIM4_Init();
 	
+
 	//ResetState();
-	
 	
 	while(1)
 	{
@@ -35,6 +33,9 @@ int main()
 
 		disp1color_DrawLine(0, 10, 127, 10);
 		disp1color_printf(28, 23, FONTID_10X16F, "32.537 %cC", 0x80);
+
+		//disp1color_printf(0, 46, FONTID_6X8M, "—работало %d раз", TriggeredNumber); 
+
 		disp1color_DrawLine(0, 54, 127, 54);
 
 		disp1color_printf(43, 57, FONTID_6X8M, "R1: 0.001044 ќм");  
@@ -61,7 +62,7 @@ int main()
 		//GPIOC->BSRR |= GPIO_BSRR_BR13;
 	}
 }
-//*******************************  Initialization functions  ****************************************************
+//**************************  Initialization functions  ***********************************
 void RCC_Init(void)
 {
  //Description on 13:30 of third lesson	
@@ -160,11 +161,11 @@ void GPIO_Init(void)
 	GPIOB->CRH |= GPIO_CRH_CNF14_1;					//Input with pull up/pull down
 	GPIOB->ODR &= ~GPIO_ODR_ODR14;					//Pull down	
 
-	AFIO->EXTICR[3] &= ~AFIO_EXTICR4_EXTI14;			//Channel EXTI Reset
+	AFIO->EXTICR[3] &= ~AFIO_EXTICR4_EXTI14;		//Channel EXTI Reset
 	AFIO->EXTICR[3] |= AFIO_EXTICR4_EXTI14_PB;		//Channel EXTI connected to PB 
 
-	EXTI->RTSR |= EXTI_RTSR_TR14;					//Rising trigger enabled for fourth channel
-	EXTI->FTSR &= ~EXTI_FTSR_TR14;					//Falling trigger disabled for fourth channel
+	EXTI->RTSR &= ~EXTI_RTSR_TR14;					//Rising trigger enabled for fourth channel
+	EXTI->FTSR |= EXTI_FTSR_TR14;					//Falling trigger disabled for fourth channel
 
 	EXTI->PR |= EXTI_PR_PR14;						//Clear interrupt flag
 	EXTI->IMR |= EXTI_IMR_MR14;						//Enable interrupt
@@ -175,11 +176,11 @@ void GPIO_Init(void)
 	GPIOB->CRH |= GPIO_CRH_CNF15_1;					//Input with pull up/pull down
 	GPIOB->ODR &= ~GPIO_ODR_ODR15;					//Pull down	
 
-	AFIO->EXTICR[3] &= ~AFIO_EXTICR4_EXTI15;			//Channel EXTI Reset
+	AFIO->EXTICR[3] &= ~AFIO_EXTICR4_EXTI15;		//Channel EXTI Reset
 	AFIO->EXTICR[3] |= AFIO_EXTICR4_EXTI15_PB;		//Channel EXTI connected to PA 
 
-	EXTI->RTSR |= EXTI_RTSR_TR15;					//Rising trigger enabled for fourth channel
-	EXTI->FTSR &= ~EXTI_FTSR_TR15;					//Falling trigger disabled for fourth channel
+	EXTI->RTSR &= ~EXTI_RTSR_TR15;					//Rising trigger enabled for fourth channel
+	EXTI->FTSR |= EXTI_FTSR_TR15;					//Falling trigger disabled for fourth channel
 
 	EXTI->PR |= EXTI_PR_PR15;						//Clear interrupt flag
 	EXTI->IMR |= EXTI_IMR_MR15;						//Enable interrupt
@@ -192,8 +193,8 @@ void GPIO_Init(void)
 
 	AFIO->EXTICR[2] &= ~AFIO_EXTICR3_EXTI8;			//Channel EXTI connected to PA 
 
-	EXTI->RTSR |= EXTI_RTSR_TR8;					//Rising trigger enabled for third channel
-	EXTI->FTSR &= ~EXTI_FTSR_TR8;					//Falling trigger disabled for third channel
+	EXTI->RTSR &= ~EXTI_RTSR_TR8;					//Rising trigger enabled for third channel
+	EXTI->FTSR |= EXTI_FTSR_TR8;					//Falling trigger disabled for third channel
 
 	EXTI->PR |= EXTI_PR_PR8;						//Clear interrupt flag
 	EXTI->IMR |= EXTI_IMR_MR8;						//Enable interrupt
@@ -206,10 +207,10 @@ void GPIO_Init(void)
 
 	AFIO->EXTICR[2] &= ~AFIO_EXTICR3_EXTI9;			//Channel EXTI connected to PA 
 
-	EXTI->RTSR |= EXTI_RTSR_TR9;					//Rising trigger enabled for third channel
-	EXTI->FTSR &= ~EXTI_FTSR_TR9;					//Falling trigger disabled for third channel
+	EXTI->RTSR &= ~EXTI_RTSR_TR9;					//Rising trigger enabled for third channel
+	EXTI->FTSR |= EXTI_FTSR_TR9;					//Falling trigger disabled for third channel
 
-	EXTI->PR |= EXTI_PR_PR9;							//Clear interrupt flag
+	EXTI->PR |= EXTI_PR_PR9;						//Clear interrupt flag
 	EXTI->IMR |= EXTI_IMR_MR9;						//Enable interrupt
 
 	//Enter button
@@ -220,8 +221,8 @@ void GPIO_Init(void)
 
 	AFIO->EXTICR[2] &= ~AFIO_EXTICR3_EXTI10;		//Channel EXTI connected to PA 
 
-	EXTI->RTSR |= EXTI_RTSR_TR10;					//Rising trigger enabled for third channel
-	EXTI->FTSR &= ~EXTI_FTSR_TR10;					//Falling trigger disabled for third channel
+	EXTI->RTSR &= ~EXTI_RTSR_TR10;					//Rising trigger enabled for third channel
+	EXTI->FTSR |= EXTI_FTSR_TR10;					//Falling trigger disabled for third channel
 
 	EXTI->PR |= EXTI_PR_PR10;						//Clear interrupt flag
 	EXTI->IMR |= EXTI_IMR_MR10;						//Enable interrupt
@@ -234,8 +235,8 @@ void GPIO_Init(void)
 
 	AFIO->EXTICR[2] &= ~AFIO_EXTICR3_EXTI11;		//Channel EXTI connected to PA 
 
-	EXTI->RTSR |= EXTI_RTSR_TR11;					//Rising trigger enabled for third channel
-	EXTI->FTSR &= ~EXTI_FTSR_TR11;					//Falling trigger disabled for third channel
+	EXTI->RTSR &= ~EXTI_RTSR_TR11;					//Rising trigger enabled for third channel
+	EXTI->FTSR |= EXTI_FTSR_TR11;					//Falling trigger disabled for third channel
 
 	EXTI->PR |= EXTI_PR_PR11;						//Clear interrupt flag
 	EXTI->IMR |= EXTI_IMR_MR11;						//Enable interrupt
@@ -268,15 +269,15 @@ void SPI1_Init(void)
 	
 	
 	//Setting
-	//SCK: MODE5 = 0x03 (11b); CNF5 = 0x02 (10b)
+	//SCK
 	GPIOA->CRL |= GPIO_CRL_CNF5_1; 
 	GPIOA->CRL |= GPIO_CRL_MODE5;
   
-	//MISO: MODE6 = 0x00 (00b); CNF6 = 0x01 (01b)
+	//MISO
 	GPIOA->CRL |= GPIO_CRL_CNF6_0; 
 	GPIOA->CRL &= ~GPIO_CRL_MODE6;
   
-	//MOSI: MODE7 = 0x03 (11b); CNF7 = 0x02 (10b)
+	//MOSI
 	GPIOA->CRL |= GPIO_CRL_CNF7_1; 
 	GPIOA->CRL |= GPIO_CRL_MODE7;
 	
@@ -296,6 +297,79 @@ void SPI1_Init(void)
 	SPI1->CR1 |= SPI_CR1_MSTR;         			//Master mode
 	
 	SPI1->CR1 |= SPI_CR1_SPE; 					//Enable SPI
+}
+//-----------------------------------------------------------------------------------------
+void USART3_Init(void)
+{	
+	RCC->APB1ENR |= RCC_APB1ENR_USART3EN;
+	RCC->APB2ENR |= RCC_APB2ENR_IOPBEN;
+	RCC->APB2ENR |= RCC_APB2ENR_AFIOEN; 
+	
+	//Tx
+	GPIOB->CRH |= GPIO_CRH_CNF10_1;
+	GPIOB->CRH |= GPIO_CRH_MODE10;
+	
+	//Rx
+	GPIOB->CRH |= GPIO_CRH_CNF11_0;
+	GPIOB->CRH &= ~GPIO_CRH_MODE11;
+	
+	USART3->BRR = 0x9C4; 
+	
+	USART3->CR1 |= USART_CR1_TE; 
+	USART3->CR1 |= USART_CR1_RE;
+	USART3->CR1 |= USART_CR1_UE;
+	
+	USART3->CR1 |= USART_CR1_RXNEIE; 
+
+	NVIC_EnableIRQ(USART3_IRQn);	
+}
+//-----------------------------------------------------------------------------------------
+void TIM1_Init(void)
+{
+	RCC->APB2ENR |= RCC_APB2ENR_TIM1EN;  					// Enable TIM2 Periph clock
+
+	TIM1->PSC = 7199; 										// 10000 tick/sec 	
+	TIM1->ARR = 10000;  									// 
+	TIM1->DIER |= TIM_DIER_UIE; 							// Enable tim2 interrupt
+	TIM1->CR1 |= TIM_CR1_CEN;  			 					// Start count
+
+  	NVIC_EnableIRQ(TIM1_UP_IRQn); 		 						// Enable IRQ
+}
+//-----------------------------------------------------------------------------------------
+void TIM2_Init(void)
+{
+	RCC->APB1ENR |= RCC_APB1ENR_TIM2EN;  					// Enable TIM2 Periph clock
+
+	TIM2->PSC = 7199; 										// 10000 tick/sec 	
+	TIM2->ARR = 10000;  									// 
+	TIM2->DIER |= TIM_DIER_UIE; 							// Enable tim2 interrupt
+	TIM2->CR1 |= TIM_CR1_CEN;  			 					// Start count
+
+  	NVIC_EnableIRQ(TIM2_IRQn); 		 						// Enable IRQ
+}
+//-----------------------------------------------------------------------------------------
+void TIM3_Init(void)
+{
+	RCC->APB1ENR |= RCC_APB1ENR_TIM3EN;  					// Enable TIM2 Periph clock
+
+	TIM3->PSC = 7199; 										// 10000 tick/sec 	
+	TIM3->ARR = 10000;  									// 
+	TIM3->DIER |= TIM_DIER_UIE; 							// Enable tim2 interrupt
+	TIM3->CR1 |= TIM_CR1_CEN;  			 					// Start count
+
+  	NVIC_EnableIRQ(TIM3_IRQn); 		 						// Enable IRQ
+}
+//-----------------------------------------------------------------------------------------
+void TIM4_Init(void)
+{
+	RCC->APB1ENR |= RCC_APB1ENR_TIM4EN;  					// Enable TIM2 Periph clock
+
+	TIM4->PSC = 7199; 										// 10000 tick/sec 	
+	TIM4->ARR = 10000;  									// 
+	TIM4->DIER |= TIM_DIER_UIE; 							// Enable tim2 interrupt
+	TIM4->CR1 |= TIM_CR1_CEN;  			 					// Start count
+
+  	NVIC_EnableIRQ(TIM4_IRQn); 		 						// Enable IRQ
 }
 //-----------------------------------------------------------------------------------------
 void SSD1306_GPIO_init(void)
@@ -324,7 +398,7 @@ void SSD1306_GPIO_init(void)
 	GPIOA->CRL |= GPIO_CRL_MODE2_0;
 	//----------------------------
 }
-//*************************************************************************************************
+//*****************************************************************************************
 //-----------------------------------------------------------------------------------------
 void SPI1_Write(uint8_t *pBuff, uint16_t BuffLen)
 {
@@ -338,13 +412,113 @@ void SPI1_Write(uint8_t *pBuff, uint16_t BuffLen)
 		DelayMicro(7);
 	}	
 }
-/*
-		if(LeftBtn)
-			GPIOC->BSRR |= GPIO_BSRR_BS13;
-		else
-			GPIOC->BSRR |= GPIO_BSRR_BR13;
-*/
-//*************************************************************************************************
+//------------------------------------------------------------------------------------------
+//********************************** Interrupts handlers ***********************************
+//------------------------------------------------------------------------------------------
+void EXTI9_5_IRQHandler(void)
+{
+	GPIOC->BSRR |= GPIO_BSRR_BS13;
+	EXTI->PR |= EXTI_PR_PR5; 
+	EXTI->PR |= EXTI_PR_PR6;
+	EXTI->PR |= EXTI_PR_PR8; 							//Reset interrupt
+	EXTI->PR |= EXTI_PR_PR9; 							//Reset interrupt
+
+	++TriggeredNumber;
+
+  	GPIOC->BSRR |= GPIO_BSRR_BR13;
+}
+//------------------------------------------------------------------------------------------
+void EXTI15_10_IRQHandler(void)
+{
+	GPIOC->BSRR |= GPIO_BSRR_BS13;
+	EXTI->PR |= EXTI_PR_PR10; 							//Reset interrupt
+	EXTI->PR |= EXTI_PR_PR11; 							//Reset interrupt
+	
+	++TriggeredNumber;
+	
+  	GPIOC->BSRR |= GPIO_BSRR_BR13;
+}
+//------------------------------------------------------------------------------------------
+void USART3_IRQHandler(void)
+{
+	if(USART1->SR & USART_CR1_RXNEIE)
+	{
+		USART1->SR &= ~USART_CR1_RXNEIE;
+		
+		/*if(USART1->DR != 0)
+		{
+			IsRecCon = true;
+			CanHanding = false;
+			RecUARTBuf[RecUARTNum++] = USART1->DR;
+		}*/
+	}
+}
+//------------------------------------------------------------------------------------------
+void TIM1_UP_IRQHandler(void)
+{
+	TIM1->SR &= ~TIM_SR_UIF; 
+
+	if (LED_En) 
+	{
+		GPIOC->BSRR |= GPIO_BSRR_BS13;	
+	} 
+	else 
+	{
+		GPIOC->BSRR |= GPIO_BSRR_BR13;
+	}
+
+	LED_En = !LED_En;
+}
+//------------------------------------------------------------------------------------------
+void TIM2_IRQHandler(void)
+{
+	TIM2->SR &= ~TIM_SR_UIF; 
+
+	if (LED_En) 
+	{
+		GPIOC->BSRR |= GPIO_BSRR_BS13;	
+	} 
+	else 
+	{
+		GPIOC->BSRR |= GPIO_BSRR_BR13;
+	}
+
+	LED_En = !LED_En;
+}
+//------------------------------------------------------------------------------------------
+void TIM3_IRQHandler(void)
+{
+	TIM3->SR &= ~TIM_SR_UIF; 
+
+	if (LED_En) 
+	{
+		GPIOC->BSRR |= GPIO_BSRR_BS13;	
+	} 
+	else 
+	{
+		GPIOC->BSRR |= GPIO_BSRR_BR13;
+	}
+
+	LED_En = !LED_En;
+}
+//------------------------------------------------------------------------------------------
+void TIM4_IRQHandler(void)
+{
+	TIM4->SR &= ~TIM_SR_UIF; 
+
+	if (LED_En) 
+	{
+		GPIOC->BSRR |= GPIO_BSRR_BS13;	
+	} 
+	else 
+	{
+		GPIOC->BSRR |= GPIO_BSRR_BR13;
+	}
+
+	LED_En = !LED_En;
+}
+//------------------------------------------------------------------------------------------
+//**************************** Working functions *******************************************
 //------------------------------------------------------------------------------------------
 void DelayMicro(uint32_t time)
 {
@@ -361,38 +535,6 @@ void delay(uint32_t time)
 {		
 	uint32_t i;
 	for(i = 0; i < time; i++){}
-}
-//------------------------------------------------------------------------------------------
-//**********************************Interrupts handlers*************************************
-//------------------------------------------------------------------------------------------
-void EXTI9_5_IRQHandler(void)
-{
-	GPIOC->BSRR |= GPIO_BSRR_BS13;
-	EXTI->PR |= EXTI_PR_PR5; 
-	EXTI->PR |= EXTI_PR_PR6;
-	EXTI->PR |= EXTI_PR_PR8; 							//Reset interrupt
-	EXTI->PR |= EXTI_PR_PR9; 							//Reset interrupt
-	asm("nop");
-	asm("nop");
-	asm("nop");
-	asm("nop");
-	asm("nop");
-	delay_ms(500);
-  	GPIOC->BSRR |= GPIO_BSRR_BR13;
-}
-//------------------------------------------------------------------------------------------
-void EXTI15_10_IRQHandler(void)
-{
-	GPIOC->BSRR |= GPIO_BSRR_BS13;
-	EXTI->PR |= EXTI_PR_PR10; 							//Reset interrupt
-	EXTI->PR |= EXTI_PR_PR11; 							//Reset interrupt
-	asm("nop");
-	asm("nop");
-	asm("nop");
-	asm("nop");
-	asm("nop");
-	delay_ms(500);
-  	GPIOC->BSRR |= GPIO_BSRR_BR13;
 }
 //------------------------------------------------------------------------------------------
 
