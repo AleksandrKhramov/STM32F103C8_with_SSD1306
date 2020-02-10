@@ -11,7 +11,7 @@ int main()
 	SPI1_Init();	
 	SSD1306_Init();	
 	USART3_Init();
-	TIM1_Init();
+	//TIM1_Init();
 	//TIM2_Init();
 	//TIM3_Init();
 	//TIM4_Init();
@@ -156,36 +156,6 @@ void GPIO_Init(void)
 	//******************************
 
 	//Left button
-	GPIOB->CRH &= ~GPIO_CRH_CNF14;					//Reset CNF register				
-	GPIOB->CRH &= ~GPIO_CRH_MODE14;					//Input mode
-	GPIOB->CRH |= GPIO_CRH_CNF14_1;					//Input with pull up/pull down
-	GPIOB->ODR &= ~GPIO_ODR_ODR14;					//Pull down	
-
-	AFIO->EXTICR[3] &= ~AFIO_EXTICR4_EXTI14;		//Channel EXTI Reset
-	AFIO->EXTICR[3] |= AFIO_EXTICR4_EXTI14_PB;		//Channel EXTI connected to PB 
-
-	EXTI->RTSR &= ~EXTI_RTSR_TR14;					//Rising trigger enabled for fourth channel
-	EXTI->FTSR |= EXTI_FTSR_TR14;					//Falling trigger disabled for fourth channel
-
-	EXTI->PR |= EXTI_PR_PR14;						//Clear interrupt flag
-	EXTI->IMR |= EXTI_IMR_MR14;						//Enable interrupt
-	
-	//Right button
-	GPIOB->CRH &= ~GPIO_CRH_CNF15;					//Reset CNF register				
-	GPIOB->CRH &= ~GPIO_CRH_MODE15;					//Input mode
-	GPIOB->CRH |= GPIO_CRH_CNF15_1;					//Input with pull up/pull down
-	GPIOB->ODR &= ~GPIO_ODR_ODR15;					//Pull down	
-
-	AFIO->EXTICR[3] &= ~AFIO_EXTICR4_EXTI15;		//Channel EXTI Reset
-	AFIO->EXTICR[3] |= AFIO_EXTICR4_EXTI15_PB;		//Channel EXTI connected to PA 
-
-	EXTI->RTSR &= ~EXTI_RTSR_TR15;					//Rising trigger enabled for fourth channel
-	EXTI->FTSR |= EXTI_FTSR_TR15;					//Falling trigger disabled for fourth channel
-
-	EXTI->PR |= EXTI_PR_PR15;						//Clear interrupt flag
-	EXTI->IMR |= EXTI_IMR_MR15;						//Enable interrupt
-
-	//Up button
 	GPIOA->CRH &= ~GPIO_CRH_CNF8;					//Reset CNF register		
 	GPIOA->CRH &= ~GPIO_CRH_MODE8;					//Input mode
 	GPIOA->CRH |= GPIO_CRH_CNF8_1;					//Input with pull up/pull down
@@ -199,7 +169,7 @@ void GPIO_Init(void)
 	EXTI->PR |= EXTI_PR_PR8;						//Clear interrupt flag
 	EXTI->IMR |= EXTI_IMR_MR8;						//Enable interrupt
 
-	//Down button
+	//Right button
 	GPIOA->CRH &= ~GPIO_CRH_CNF9;					//Reset CNF register				
 	GPIOA->CRH &= ~GPIO_CRH_MODE9;					//Input mode
 	GPIOA->CRH |= GPIO_CRH_CNF9_1;					//Input with pull up/pull down
@@ -213,7 +183,7 @@ void GPIO_Init(void)
 	EXTI->PR |= EXTI_PR_PR9;						//Clear interrupt flag
 	EXTI->IMR |= EXTI_IMR_MR9;						//Enable interrupt
 
-	//Enter button
+	//Up button
 	GPIOA->CRH &= ~GPIO_CRH_CNF10;					//Reset CNF register				
 	GPIOA->CRH &= ~GPIO_CRH_MODE10;					//Input mode
 	GPIOA->CRH |= GPIO_CRH_CNF10_1;					//Input with pull up/pull down
@@ -227,7 +197,7 @@ void GPIO_Init(void)
 	EXTI->PR |= EXTI_PR_PR10;						//Clear interrupt flag
 	EXTI->IMR |= EXTI_IMR_MR10;						//Enable interrupt
 
-	//Clear button
+	//Down button
 	GPIOA->CRH &= ~GPIO_CRH_CNF11;					//Reset CNF register				
 	GPIOA->CRH &= ~GPIO_CRH_MODE11;					//Input mode
 	GPIOA->CRH |= GPIO_CRH_CNF11_1;					//Input with pull up/pull down
@@ -240,6 +210,36 @@ void GPIO_Init(void)
 
 	EXTI->PR |= EXTI_PR_PR11;						//Clear interrupt flag
 	EXTI->IMR |= EXTI_IMR_MR11;						//Enable interrupt
+
+	//Enter button
+	GPIOB->CRL &= ~GPIO_CRL_CNF6;					//Reset CNF register				
+	GPIOB->CRL &= ~GPIO_CRL_MODE6;					//Input mode
+	GPIOB->CRL |= GPIO_CRL_CNF6_1;					//Input with pull up/pull down
+	GPIOB->ODR &= ~GPIO_ODR_ODR6;					//Pull down	
+
+	AFIO->EXTICR[1] &= ~AFIO_EXTICR2_EXTI6;			//Channel EXTI connected to PA 
+	AFIO->EXTICR[1] |= AFIO_EXTICR2_EXTI6_PB;		//Channel EXTI connected to PB 
+
+	EXTI->RTSR &= ~EXTI_RTSR_TR6;					//Rising trigger enabled for third channel
+	EXTI->FTSR |= EXTI_FTSR_TR6;					//Falling trigger disabled for third channel
+
+	EXTI->PR |= EXTI_PR_PR6;						//Clear interrupt flag
+	EXTI->IMR |= EXTI_IMR_MR6;						//Enable interrupt
+
+	//Clear button
+	GPIOB->CRL &= ~GPIO_CRL_CNF7;					//Reset CNF register				
+	GPIOB->CRL &= ~GPIO_CRL_MODE7;					//Input mode
+	GPIOB->CRL |= GPIO_CRL_CNF7_1;					//Input with pull up/pull down
+	GPIOB->ODR &= ~GPIO_ODR_ODR7;					//Pull down	
+
+	AFIO->EXTICR[1] &= ~AFIO_EXTICR2_EXTI7;			//Channel EXTI connected to PA 
+	AFIO->EXTICR[1] |= AFIO_EXTICR2_EXTI7_PB;		//Channel EXTI connected to PB 
+
+	EXTI->RTSR &= ~EXTI_RTSR_TR7;					//Rising trigger enabled for third channel
+	EXTI->FTSR |= EXTI_FTSR_TR7;					//Falling trigger disabled for third channel
+
+	EXTI->PR |= EXTI_PR_PR7;						//Clear interrupt flag
+	EXTI->IMR |= EXTI_IMR_MR7;						//Enable interrupt
 
 	NVIC_EnableIRQ(EXTI9_5_IRQn);
 	NVIC_EnableIRQ(EXTI15_10_IRQn);
@@ -420,11 +420,12 @@ void EXTI9_5_IRQHandler(void)
 	GPIOC->BSRR |= GPIO_BSRR_BS13;
 	EXTI->PR |= EXTI_PR_PR5; 
 	EXTI->PR |= EXTI_PR_PR6;
+	EXTI->PR |= EXTI_PR_PR7;
 	EXTI->PR |= EXTI_PR_PR8; 							//Reset interrupt
 	EXTI->PR |= EXTI_PR_PR9; 							//Reset interrupt
 
-	++TriggeredNumber;
-
+	//++TriggeredNumber;
+	delay_ms(500);
   	GPIOC->BSRR |= GPIO_BSRR_BR13;
 }
 //------------------------------------------------------------------------------------------
@@ -434,8 +435,8 @@ void EXTI15_10_IRQHandler(void)
 	EXTI->PR |= EXTI_PR_PR10; 							//Reset interrupt
 	EXTI->PR |= EXTI_PR_PR11; 							//Reset interrupt
 	
-	++TriggeredNumber;
-	
+	//++TriggeredNumber;
+	delay_ms(500);
   	GPIOC->BSRR |= GPIO_BSRR_BR13;
 }
 //------------------------------------------------------------------------------------------
@@ -460,11 +461,11 @@ void TIM1_UP_IRQHandler(void)
 
 	if (LED_En) 
 	{
-		GPIOC->BSRR |= GPIO_BSRR_BS13;	
+		//GPIOC->BSRR |= GPIO_BSRR_BS13;	
 	} 
 	else 
 	{
-		GPIOC->BSRR |= GPIO_BSRR_BR13;
+		//GPIOC->BSRR |= GPIO_BSRR_BR13;
 	}
 
 	LED_En = !LED_En;
