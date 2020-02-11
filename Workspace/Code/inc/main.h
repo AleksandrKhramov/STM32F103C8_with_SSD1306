@@ -19,6 +19,7 @@
 void GPIO_Init(void);
 void RCC_Init(void);
 void SPI1_Init(void);
+void SPI2_Init(void);
 void USART3_Init(void);
 void TIM1_Init(void);
 void TIM2_Init(void);

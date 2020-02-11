@@ -9,6 +9,7 @@ int main()
 	RCC_Init();
 	GPIO_Init();
 	SPI1_Init();	
+	SPI2_Init();
 	SSD1306_Init();	
 	USART3_Init();
 	//TIM1_Init();
@@ -299,6 +300,60 @@ void SPI1_Init(void)
 	SPI1->CR1 |= SPI_CR1_SPE; 					//Enable SPI
 }
 //-----------------------------------------------------------------------------------------
+void SPI2_Init(void)
+{
+	//Enable clock for SPI2 and GPIOB
+	RCC->APB1ENR |= RCC_APB1ENR_SPI2EN; 
+	RCC->APB2ENR |= RCC_APB2ENR_IOPBEN;
+
+	/*********************************************/
+	/*** Setting pins GPIOB for work with SPI2 ***/
+	/*********************************************/
+	//PA13 - MOSI
+	//PA14 - MISO
+	//PA15 - SCK
+	
+	//First, clear all comfiguration bits
+	GPIOB->CRH &= ~GPIO_CRH_CNF13;
+	GPIOB->CRH &= ~GPIO_CRH_CNF14;
+	GPIOB->CRH &= ~GPIO_CRH_CNF15;
+	
+	GPIOB->CRH &= ~GPIO_CRH_MODE13;
+	GPIOB->CRH &= ~GPIO_CRH_MODE14;
+	GPIOB->CRH &= ~GPIO_CRH_MODE15;
+	
+	
+	//Setting
+	//SCK
+	GPIOB->CRH |= GPIO_CRH_CNF13_1; 
+	GPIOB->CRH |= GPIO_CRH_MODE13;
+  
+	//MISO
+	GPIOB->CRH |= GPIO_CRH_CNF14_0; 
+	GPIOB->CRH &= ~GPIO_CRH_MODE14;
+  
+	//MOSI
+	GPIOB->CRH |= GPIO_CRH_CNF15_1; 
+	GPIOB->CRH |= GPIO_CRH_MODE15;
+	
+  
+	/**********************/
+	/***  Setting SPI2  ***/
+	/**********************/
+  
+	SPI2->CR1 |= SPI_CR1_BR_2;        			//Baud rate: F_PCLK/32
+	SPI2->CR1 &= ~SPI_CR1_CPOL;					//Clock polarity SPI: 0
+	SPI2->CR1 &= ~SPI_CR1_CPHA;					//Clock phase SPI: 0
+	SPI2->CR1 &= ~SPI_CR1_DFF;  				//Data frame format is 8 bit 
+	SPI2->CR1 &= ~SPI_CR1_LSBFIRST;    			//MSB first
+	SPI2->CR1 |= SPI_CR1_SSM;          			//Software NSS management SS
+	SPI2->CR1 |= SPI_CR1_SSI;          			//SS in high level
+  
+	SPI2->CR1 |= SPI_CR1_MSTR;         			//Master mode
+	
+	SPI2->CR1 |= SPI_CR1_SPE; 					//Enable SPI	
+}
+//-----------------------------------------------------------------------------------------
 void USART3_Init(void)
 {	
 	RCC->APB1ENR |= RCC_APB1ENR_USART3EN;
@@ -398,7 +453,7 @@ void SSD1306_GPIO_init(void)
 	GPIOA->CRL |= GPIO_CRL_MODE2_0;
 	//----------------------------
 }
-//*****************************************************************************************
+//**************************** Interconnection functions **********************************
 //-----------------------------------------------------------------------------------------
 void SPI1_Write(uint8_t *pBuff, uint16_t BuffLen)
 {
