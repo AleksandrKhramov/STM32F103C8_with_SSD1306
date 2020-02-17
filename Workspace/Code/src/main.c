@@ -2,7 +2,13 @@
 
 bool Mode_Rectangle = false;
 bool LED_En = false;
-uint32_t TriggeredNumber = 0;
+uint32_t bt1 = 0;
+uint32_t bt2 = 0;
+uint32_t bt3 = 0;
+uint32_t bt4 = 0;
+uint32_t bt5 = 0;
+uint32_t bt6 = 0;
+extern struct StateType State;
 
 int main()
 {
@@ -12,585 +18,724 @@ int main()
 	SPI2_Init();
 	SSD1306_Init();	
 	USART3_Init();
-	//TIM1_Init();
-	//TIM2_Init();
+	//TIM1_Init();`
+	TIM2_Init();
 	//TIM3_Init();
 	//TIM4_Init();
 	
+	ResetState();
 
-	//ResetState();
-	
 	while(1)
 	{
-		//GPIOC->BSRR |= GPIO_BSRR_BS13;
-		delay_ms(200);
-		disp1color_FillScreenbuff(0);
+		if((State.LeftBtnFlag && !State.LeftBtn) || (State.RightBtnFlag && !State.RightBtn) || 
+		   (State.UpBtnFlag && !State.UpBtn) || (State.DownBtnFlag && !State.DownBtn) ||
+		   (State.EnterBtnFlag && !State.EnterBtn) || (State.ClearBtnFlag && !State.ClearBtn))
+		{
+			Timer2Enable();
+		}
+
+		delay_ms(50);
 		
-		disp1color_printf(0, 1, FONTID_6X8M,  "             Готов  к  работе\n\r");
-		disp1color_printf(118, 1, FONTID_6X8M, "%c", 0x81);
+		__disable_irq();
 
-		//disp1color_printf(0, 1, FONTID_6X8M,  "             Выход  на  режим\n\r");
-		//disp1color_printf(118, 1, FONTID_6X8M, "x");
+		if(State.LeftBtn)
+			++bt1;
+		if(State.RightBtn)
+			++bt2;
+		if(State.UpBtn)
+			++bt3;
+		if(State.DownBtn)
+			++bt4;
+		if(State.EnterBtn)
+			++bt5;
+		if(State.ClearBtn)
+			++bt6;
 
-		disp1color_DrawLine(0, 10, 127, 10);
-		disp1color_printf(28, 23, FONTID_10X16F, "32.537 %cC", 0x80);
+		UpdateScreen();	
 
-		//disp1color_printf(0, 46, FONTID_6X8M, "Сработало %d раз", TriggeredNumber); 
+		State.LeftBtn = false;
+		State.RightBtn = false;
+		State.UpBtn = false;
+		State.DownBtn = false;
+		State.EnterBtn = false;
+		State.ClearBtn = false;
+		
+		if(!State.LeftBtnFlag && !State.RightBtnFlag && !State.UpBtnFlag && !State.DownBtnFlag && !State.EnterBtnFlag && !State.ClearBtnFlag)
+		{
+			Timer2Disable(); 
+		}
 
-		disp1color_DrawLine(0, 54, 127, 54);
+		__enable_irq();
 
-		disp1color_printf(43, 57, FONTID_6X8M, "R1: 0.001044 Ом");  
-
-		disp1color_DrawLine(34, 59, 36, 57);
-		disp1color_DrawLine(36, 57, 38, 59);
-		disp1color_DrawLine(37, 59, 35, 59);
-
-		disp1color_DrawLine(34, 61, 36, 63);
-		disp1color_DrawLine(36, 63, 38, 61);
-		disp1color_DrawLine(37, 61, 35, 61);
-
-		if(Mode_Rectangle)
-			disp1color_DrawRectangle(MODE_RECT_L - 1, MODE_RECT_T - 1, MODE_RECT_L + 3, MODE_RECT_T + 3);	
-		else
-			disp1color_DrawRectangle(MODE_RECT_L, MODE_RECT_T, MODE_RECT_L + 2, MODE_RECT_T + 2);
-
-		disp1color_UpdateFromBuff();
-
-		Mode_Rectangle = !Mode_Rectangle;
-
-		//GPIOC->BSRR |= GPIO_BSRR_BR13;
-		delay_ms(200);
-		//GPIOC->BSRR |= GPIO_BSRR_BR13;
+		delay_ms(50);
 	}
 }
 //**************************  Initialization functions  ***********************************
-void RCC_Init(void)
-{
- //Description on 13:30 of third lesson	
+	void RCC_Init(void)
+	{
+	 //Description on 13:30 of third lesson	
+		
+	 //Clock control register settings
+		
+		RCC->CR |= ((uint32_t)RCC_CR_HSEON); 												// Enable HSE   							/*!< External High Speed clock enable */
+		//Set and cleared by software.
+		//Cleared by hardware to stop the HSE oscillator when entering in Stop or Standby mode. This
+		//bit cannot be reset if the HSE oscillator is used directly or indirectly as the system clock.
+		
+		while (!(RCC->CR & RCC_CR_HSERDY));													// Ready start HSE						/*!< External High Speed clock ready flag */	
+		//Set by hardware to indicate that the HSE oscillator is stable. This bit needs 6 cycles of the
+		//HSE oscillator clock to go to zero after HSEON is reset.
+		
+		FLASH->ACR = FLASH_ACR_PRFTBE | FLASH_ACR_LATENCY;					// Cloclk Flash memory
+
+	 //Clock configuration register
+		
+		RCC->CFGR |= RCC_CFGR_HPRE_DIV1;														// AHB = SYSCLK/1
+		//AHB prescaler
+	 //Set and cleared by software to control the division factor of the AHB clock.
+		
+		RCC->CFGR |= RCC_CFGR_PPRE1_DIV1;														// APB1 = HCLK/1	
+		//APB low-speed prescaler (APB1)
+		//Set and cleared by software to control the division factor of the APB low-speed clock (PCLK1).
+		//Warning: the software has to set correctly these bits to not exceed 36 MHz on this domain.
+		
+		RCC->CFGR |= RCC_CFGR_PPRE2_DIV1;														// APB2 = HCLK/1
+		//APB high-speed prescaler (APB2)
+		//Set and cleared by software to control the division factor of the APB high-speed clock (PCLK2).
+		
+		//Description of next three registers are below themselves 
+		RCC->CFGR &= ~RCC_CFGR_PLLMULL;               							// clear PLLMULL bits
+		RCC->CFGR &= ~RCC_CFGR_PLLSRC;															// clearn PLLSRC bits
+		RCC->CFGR &= ~RCC_CFGR_PLLXTPRE;														// clearn PLLXTPRE bits
+		
+		RCC->CFGR |= RCC_CFGR_PLLSRC_HSE; 											// source HSE									/*!< PREDIV1 clock selected as PLL entry clock source */
+		//PLL entry clock source
+		//Set and cleared by software to select PLL clock source. This bit can be written only when
+		//PLL is disabled.
+		
+		RCC->CFGR |= RCC_CFGR_PLLXTPRE_HSE_Div2; 								// source HSE/2 = 4 MHz				/*!< PREDIV1 clock divided by 2 for PLL entry */
+		//LSB of division factor PREDIV1
+		//Set and cleared by software to select the least significant bit of the PREDIV1 division factor. 
+		
+		RCC->CFGR |= RCC_CFGR_PLLMULL6; 														// PLL x6: clock = 4 MHz * 6 = 24 MHz		/*!< PLL input clock*6 */
+		//PLL multiplication factor
+		//These bits are written by software to define the PLL multiplication factor. These bits can be
+		//written only when PLL is disabled.
+
+	 //Clock configuration register	
+		RCC->CR |= RCC_CR_PLLON;                      							// enable PLL
+		//PLL enable
+		//Set and cleared by software to enable PLL.
+		//Cleared by hardware when entering Stop or Standby mode. This bit can not be reset if the
+		//PLL clock is used as system clock or is selected to become the system clock.
+		
+		while((RCC->CR & RCC_CR_PLLRDY) == 0);      								// wait till PLL is ready
+		//PLL clock ready flag
+		//Set by hardware to indicate that the PLL is locked.
+
+	 //Clock configuration register		
+		RCC->CFGR &= ~RCC_CFGR_SW;                   							 	// clear SW bits
+		RCC->CFGR |= RCC_CFGR_SW_PLL;                 							// select source SYSCLK = PLL
+		//System clock switch
+		//Set and cleared by software to select SYSCLK source.
+		//Set by hardware to force HSI selection when leaving Stop and Standby mode or in case of
+		//failure of the HSE oscillator used directly or indirectly as system clock (if the Clock Security
+		//System is enabled).
+
+		while((RCC->CFGR & RCC_CFGR_SWS) != RCC_CFGR_SWS_1);  			// wait till PLL is used
+		//System clock switch status
+		//Set and cleared by hardware to indicate which clock source is used as system clock.
+		
+	}
+	//-----------------------------------------------------------------------------------------
+	void GPIO_Init(void)
+	{
+		RCC->APB2ENR |= RCC_APB2ENR_IOPAEN;                       	//enable clock for port A
+		RCC->APB2ENR |= RCC_APB2ENR_IOPCEN;                       	//enable clock for port C
+		RCC->APB2ENR |= RCC_APB2ENR_IOPBEN;                       	//enable clock for port B
+		RCC->APB2ENR |= RCC_APB2ENR_AFIOEN; 						//enable clock for AFIO
+		
+		//Green LED init
+		GPIOC->CRH &= ~GPIO_CRH_CNF13;				
+		GPIOC->CRH |= GPIO_CRH_MODE13_0;			
+
+		//******************************
+		//** Setting GPIO for buttons **
+		//******************************
+
+		//Left button
+		GPIOA->CRH &= ~GPIO_CRH_CNF8;					//Reset CNF register		
+		GPIOA->CRH &= ~GPIO_CRH_MODE8;					//Input mode
+		GPIOA->CRH |= GPIO_CRH_CNF8_1;					//Input with pull up/pull down
+		GPIOA->ODR &= ~GPIO_ODR_ODR8;					//Pull down						
+
+		AFIO->EXTICR[2] &= ~AFIO_EXTICR3_EXTI8;			//Channel EXTI connected to PA 
+
+		EXTI->RTSR |= EXTI_RTSR_TR8;					//Rising trigger enabled for third channel
+		EXTI->FTSR |= EXTI_FTSR_TR8;					//Falling trigger enabled for third channel
+
+		EXTI->PR |= EXTI_PR_PR8;						//Clear interrupt flag
+		EXTI->IMR |= EXTI_IMR_MR8;						//Enable interrupt
+
+		//Right button
+		GPIOA->CRH &= ~GPIO_CRH_CNF9;					//Reset CNF register				
+		GPIOA->CRH &= ~GPIO_CRH_MODE9;					//Input mode
+		GPIOA->CRH |= GPIO_CRH_CNF9_1;					//Input with pull up/pull down
+		GPIOA->ODR &= ~GPIO_ODR_ODR9;					//Pull down	
+
+		AFIO->EXTICR[2] &= ~AFIO_EXTICR3_EXTI9;			//Channel EXTI connected to PA 
+
+		EXTI->RTSR |= EXTI_RTSR_TR9;					//Rising trigger enabled for third channel
+		EXTI->FTSR |= EXTI_FTSR_TR9;					//Falling trigger enabled for third channel
+
+		EXTI->PR |= EXTI_PR_PR9;						//Clear interrupt flag
+		EXTI->IMR |= EXTI_IMR_MR9;						//Enable interrupt
+
+		//Up button
+		GPIOA->CRH &= ~GPIO_CRH_CNF10;					//Reset CNF register				
+		GPIOA->CRH &= ~GPIO_CRH_MODE10;					//Input mode
+		GPIOA->CRH |= GPIO_CRH_CNF10_1;					//Input with pull up/pull down
+		GPIOA->ODR &= ~GPIO_ODR_ODR10;					//Pull down	
+
+		AFIO->EXTICR[2] &= ~AFIO_EXTICR3_EXTI10;		//Channel EXTI connected to PA 
+
+		EXTI->RTSR |= EXTI_RTSR_TR10;					//Rising trigger enabled for third channel
+		EXTI->FTSR |= EXTI_FTSR_TR10;					//Falling trigger enabled for third channel
+
+		EXTI->PR |= EXTI_PR_PR10;						//Clear interrupt flag
+		EXTI->IMR |= EXTI_IMR_MR10;						//Enable interrupt
+
+		//Down button
+		GPIOA->CRH &= ~GPIO_CRH_CNF11;					//Reset CNF register				
+		GPIOA->CRH &= ~GPIO_CRH_MODE11;					//Input mode
+		GPIOA->CRH |= GPIO_CRH_CNF11_1;					//Input with pull up/pull down
+		GPIOA->ODR &= ~GPIO_ODR_ODR11;					//Pull down	
+
+		AFIO->EXTICR[2] &= ~AFIO_EXTICR3_EXTI11;		//Channel EXTI connected to PA 
+
+		EXTI->RTSR |= EXTI_RTSR_TR11;					//Rising trigger enabled for third channel
+		EXTI->FTSR |= EXTI_FTSR_TR11;					//Falling trigger enabled for third channel
+
+		EXTI->PR |= EXTI_PR_PR11;						//Clear interrupt flag
+		EXTI->IMR |= EXTI_IMR_MR11;						//Enable interrupt
+
+		//Enter button
+		GPIOB->CRL &= ~GPIO_CRL_CNF6;					//Reset CNF register				
+		GPIOB->CRL &= ~GPIO_CRL_MODE6;					//Input mode
+		GPIOB->CRL |= GPIO_CRL_CNF6_1;					//Input with pull up/pull down
+		GPIOB->ODR &= ~GPIO_ODR_ODR6;					//Pull down	
+
+		AFIO->EXTICR[1] &= ~AFIO_EXTICR2_EXTI6;			//Channel EXTI connected to PA 
+		AFIO->EXTICR[1] |= AFIO_EXTICR2_EXTI6_PB;		//Channel EXTI connected to PB 
+
+		EXTI->RTSR |= EXTI_RTSR_TR6;					//Rising trigger enabled for third channel
+		EXTI->FTSR |= EXTI_FTSR_TR6;					//Falling trigger enabled for third channel
+
+		EXTI->PR |= EXTI_PR_PR6;						//Clear interrupt flag
+		EXTI->IMR |= EXTI_IMR_MR6;						//Enable interrupt
+
+		//Clear button
+		GPIOB->CRL &= ~GPIO_CRL_CNF7;					//Reset CNF register				
+		GPIOB->CRL &= ~GPIO_CRL_MODE7;					//Input mode
+		GPIOB->CRL |= GPIO_CRL_CNF7_1;					//Input with pull up/pull down
+		GPIOB->ODR &= ~GPIO_ODR_ODR7;					//Pull down	
+
+		AFIO->EXTICR[1] &= ~AFIO_EXTICR2_EXTI7;			//Channel EXTI connected to PA 
+		AFIO->EXTICR[1] |= AFIO_EXTICR2_EXTI7_PB;		//Channel EXTI connected to PB 
+
+		EXTI->RTSR |= EXTI_RTSR_TR7;					//Rising trigger enabled for third channel
+		EXTI->FTSR |= EXTI_FTSR_TR7;					//Falling trigger enabled for third channel
+
+		EXTI->PR |= EXTI_PR_PR7;						//Clear interrupt flag
+		EXTI->IMR |= EXTI_IMR_MR7;						//Enable interrupt
+
+		NVIC_EnableIRQ(EXTI9_5_IRQn);
+		NVIC_EnableIRQ(EXTI15_10_IRQn);
+	}
+	//------------------------------------------------------------------------------------------
+	void SPI1_Init(void)
+	{
+		//Enable clock for SPI1 Рё GPIOA
+		RCC->APB2ENR |= RCC_APB2ENR_SPI1EN; 
+		RCC->APB2ENR |= RCC_APB2ENR_IOPAEN;
+
+		/*********************************************/
+		/*** Setting pins GPIOA for work with SPI1 ***/
+		/*********************************************/
+		//PA7 - MOSI
+		//PA6 - MISO
+		//PA5 - SCK
+		
+		//First, clear all comfiguration bits
+		GPIOA->CRL &= ~GPIO_CRL_CNF5;
+		GPIOA->CRL &= ~GPIO_CRL_CNF6;
+		GPIOA->CRL &= ~GPIO_CRL_CNF7;
+		
+		GPIOA->CRL &= ~GPIO_CRL_MODE5;
+		GPIOA->CRL &= ~GPIO_CRL_MODE5;
+		GPIOA->CRL &= ~GPIO_CRL_CNF5;
+		
+		
+		//Setting
+		//SCK
+		GPIOA->CRL |= GPIO_CRL_CNF5_1; 
+		GPIOA->CRL |= GPIO_CRL_MODE5;
 	
- //Clock control register settings
+		//MISO
+		GPIOA->CRL |= GPIO_CRL_CNF6_0; 
+		GPIOA->CRL &= ~GPIO_CRL_MODE6;
 	
-	RCC->CR |= ((uint32_t)RCC_CR_HSEON); 												// Enable HSE   							/*!< External High Speed clock enable */
-	//Set and cleared by software.
-	//Cleared by hardware to stop the HSE oscillator when entering in Stop or Standby mode. This
-	//bit cannot be reset if the HSE oscillator is used directly or indirectly as the system clock.
+		//MOSI
+		GPIOA->CRL |= GPIO_CRL_CNF7_1; 
+		GPIOA->CRL |= GPIO_CRL_MODE7;
+		
 	
-	while (!(RCC->CR & RCC_CR_HSERDY));													// Ready start HSE						/*!< External High Speed clock ready flag */	
-	//Set by hardware to indicate that the HSE oscillator is stable. This bit needs 6 cycles of the
-	//HSE oscillator clock to go to zero after HSEON is reset.
+		/**********************/
+		/***  Setting SPI1  ***/
+		/**********************/
 	
-	FLASH->ACR = FLASH_ACR_PRFTBE | FLASH_ACR_LATENCY;					// Cloclk Flash memory
-
- //Clock configuration register
+		SPI1->CR1 |= SPI_CR1_BR_2;        			//Baud rate: F_PCLK/32
+		SPI1->CR1 &= ~SPI_CR1_CPOL;					//Clock polarity SPI: 0
+		SPI1->CR1 &= ~SPI_CR1_CPHA;					//Clock phase SPI: 0
+		SPI1->CR1 &= ~SPI_CR1_DFF;  				//Data frame format is 8 bit 
+		SPI1->CR1 &= ~SPI_CR1_LSBFIRST;    			//MSB first
+		SPI1->CR1 |= SPI_CR1_SSM;          			//Software NSS management SS
+		SPI1->CR1 |= SPI_CR1_SSI;          			//SS in high level
 	
-	RCC->CFGR |= RCC_CFGR_HPRE_DIV1;														// AHB = SYSCLK/1
-	//AHB prescaler
-  //Set and cleared by software to control the division factor of the AHB clock.
+		SPI1->CR1 |= SPI_CR1_MSTR;         			//Master mode
+		
+		SPI1->CR1 |= SPI_CR1_SPE; 					//Enable SPI
+	}
+	//-----------------------------------------------------------------------------------------
+	void SPI2_Init(void)
+	{
+		//Enable clock for SPI2 and GPIOB
+		RCC->APB1ENR |= RCC_APB1ENR_SPI2EN; 
+		RCC->APB2ENR |= RCC_APB2ENR_IOPBEN;
+
+		/*********************************************/
+		/*** Setting pins GPIOB for work with SPI2 ***/
+		/*********************************************/
+		//PA13 - MOSI
+		//PA14 - MISO
+		//PA15 - SCK
+		
+		//First, clear all comfiguration bits
+		GPIOB->CRH &= ~GPIO_CRH_CNF13;
+		GPIOB->CRH &= ~GPIO_CRH_CNF14;
+		GPIOB->CRH &= ~GPIO_CRH_CNF15;
+		
+		GPIOB->CRH &= ~GPIO_CRH_MODE13;
+		GPIOB->CRH &= ~GPIO_CRH_MODE14;
+		GPIOB->CRH &= ~GPIO_CRH_MODE15;
+		
+		
+		//Setting
+		//SCK
+		GPIOB->CRH |= GPIO_CRH_CNF13_1; 
+		GPIOB->CRH |= GPIO_CRH_MODE13;
 	
-	RCC->CFGR |= RCC_CFGR_PPRE1_DIV1;														// APB1 = HCLK/1	
-	//APB low-speed prescaler (APB1)
-	//Set and cleared by software to control the division factor of the APB low-speed clock (PCLK1).
-	//Warning: the software has to set correctly these bits to not exceed 36 MHz on this domain.
+		//MISO
+		GPIOB->CRH |= GPIO_CRH_CNF14_0; 
+		GPIOB->CRH &= ~GPIO_CRH_MODE14;
 	
-	RCC->CFGR |= RCC_CFGR_PPRE2_DIV1;														// APB2 = HCLK/1
-	//APB high-speed prescaler (APB2)
-	//Set and cleared by software to control the division factor of the APB high-speed clock (PCLK2).
+		//MOSI
+		GPIOB->CRH |= GPIO_CRH_CNF15_1; 
+		GPIOB->CRH |= GPIO_CRH_MODE15;
+		
 	
-	//Description of next three registers are below themselves 
-	RCC->CFGR &= ~RCC_CFGR_PLLMULL;               							// clear PLLMULL bits
-	RCC->CFGR &= ~RCC_CFGR_PLLSRC;															// clearn PLLSRC bits
-	RCC->CFGR &= ~RCC_CFGR_PLLXTPRE;														// clearn PLLXTPRE bits
+		/**********************/
+		/***  Setting SPI2  ***/
+		/**********************/
 	
-	RCC->CFGR |= RCC_CFGR_PLLSRC_HSE; 											// source HSE									/*!< PREDIV1 clock selected as PLL entry clock source */
-	//PLL entry clock source
-	//Set and cleared by software to select PLL clock source. This bit can be written only when
-	//PLL is disabled.
+		SPI2->CR1 |= SPI_CR1_BR_2;        			//Baud rate: F_PCLK/32
+		SPI2->CR1 &= ~SPI_CR1_CPOL;					//Clock polarity SPI: 0
+		SPI2->CR1 &= ~SPI_CR1_CPHA;					//Clock phase SPI: 0
+		SPI2->CR1 &= ~SPI_CR1_DFF;  				//Data frame format is 8 bit 
+		SPI2->CR1 &= ~SPI_CR1_LSBFIRST;    			//MSB first
+		SPI2->CR1 |= SPI_CR1_SSM;          			//Software NSS management SS
+		SPI2->CR1 |= SPI_CR1_SSI;          			//SS in high level
 	
-	RCC->CFGR |= RCC_CFGR_PLLXTPRE_HSE_Div2; 								// source HSE/2 = 4 MHz				/*!< PREDIV1 clock divided by 2 for PLL entry */
-	//LSB of division factor PREDIV1
-	//Set and cleared by software to select the least significant bit of the PREDIV1 division factor. 
-	
-	RCC->CFGR |= RCC_CFGR_PLLMULL6; 														// PLL x6: clock = 4 MHz * 6 = 24 MHz		/*!< PLL input clock*6 */
-	//PLL multiplication factor
-	//These bits are written by software to define the PLL multiplication factor. These bits can be
-	//written only when PLL is disabled.
+		SPI2->CR1 |= SPI_CR1_MSTR;         			//Master mode
+		
+		SPI2->CR1 |= SPI_CR1_SPE; 					//Enable SPI	
+	}
+	//-----------------------------------------------------------------------------------------
+	void USART3_Init(void)
+	{	
+		RCC->APB1ENR |= RCC_APB1ENR_USART3EN;
+		RCC->APB2ENR |= RCC_APB2ENR_IOPBEN;
+		RCC->APB2ENR |= RCC_APB2ENR_AFIOEN; 
+		
+		//Tx
+		GPIOB->CRH |= GPIO_CRH_CNF10_1;
+		GPIOB->CRH |= GPIO_CRH_MODE10;
+		
+		//Rx
+		GPIOB->CRH |= GPIO_CRH_CNF11_0;
+		GPIOB->CRH &= ~GPIO_CRH_MODE11;
+		
+		USART3->BRR = 0x9C4; 
+		
+		USART3->CR1 |= USART_CR1_TE; 
+		USART3->CR1 |= USART_CR1_RE;
+		USART3->CR1 |= USART_CR1_UE;
+		
+		USART3->CR1 |= USART_CR1_RXNEIE; 
 
- //Clock configuration register	
-	RCC->CR |= RCC_CR_PLLON;                      							// enable PLL
-	//PLL enable
-	//Set and cleared by software to enable PLL.
-	//Cleared by hardware when entering Stop or Standby mode. This bit can not be reset if the
-	//PLL clock is used as system clock or is selected to become the system clock.
-	
-	while((RCC->CR & RCC_CR_PLLRDY) == 0);      								// wait till PLL is ready
-	//PLL clock ready flag
-	//Set by hardware to indicate that the PLL is locked.
+		NVIC_EnableIRQ(USART3_IRQn);	
+	}
+	//-----------------------------------------------------------------------------------------
+	void TIM1_Init(void)
+	{
+		RCC->APB2ENR |= RCC_APB2ENR_TIM1EN;  					// Enable TIM2 Periph clock
 
- //Clock configuration register		
-	RCC->CFGR &= ~RCC_CFGR_SW;                   							 	// clear SW bits
-  RCC->CFGR |= RCC_CFGR_SW_PLL;                 							// select source SYSCLK = PLL
-	//System clock switch
-	//Set and cleared by software to select SYSCLK source.
-	//Set by hardware to force HSI selection when leaving Stop and Standby mode or in case of
-	//failure of the HSE oscillator used directly or indirectly as system clock (if the Clock Security
-	//System is enabled).
+		TIM1->PSC = 7199; 										// 10000 tick/sec 	
+		TIM1->ARR = 10000;  									// 
+		TIM1->DIER |= TIM_DIER_UIE; 							// Enable tim2 interrupt
+		TIM1->CR1 |= TIM_CR1_CEN;  			 					// Start count
 
-	while((RCC->CFGR & RCC_CFGR_SWS) != RCC_CFGR_SWS_1);  			// wait till PLL is used
-	//System clock switch status
-	//Set and cleared by hardware to indicate which clock source is used as system clock.
-	
-}
-//-----------------------------------------------------------------------------------------
-void GPIO_Init(void)
-{
-	RCC->APB2ENR |= RCC_APB2ENR_IOPAEN;                       	//enable clock for port A
-	RCC->APB2ENR |= RCC_APB2ENR_IOPCEN;                       	//enable clock for port C
-	RCC->APB2ENR |= RCC_APB2ENR_IOPBEN;                       	//enable clock for port B
-	RCC->APB2ENR |= RCC_APB2ENR_AFIOEN; 						//enable clock for AFIO
-	
-	//Green LED init
-	GPIOC->CRH &= ~GPIO_CRH_CNF13;				
-	GPIOC->CRH |= GPIO_CRH_MODE13_0;			
+		NVIC_EnableIRQ(TIM1_UP_IRQn); 		 						// Enable IRQ
+	}
+	//-----------------------------------------------------------------------------------------
+	void TIM2_Init(void)
+	{
+		RCC->APB1ENR |= RCC_APB1ENR_TIM2EN;  					// Enable TIM2 Periph clock
 
-	//******************************
-	//** Setting GPIO for buttons **
-	//******************************
+		TIM2->PSC = 7199; 										// 10000 tick/sec 	
+		TIM2->ARR = 100;  										// 
+		TIM2->DIER |= TIM_DIER_UIE; 							// Enable tim2 interrupt
+		TIM2->CR1 &= ~TIM_CR1_CEN;  			 				// Stop count
 
-	//Left button
-	GPIOA->CRH &= ~GPIO_CRH_CNF8;					//Reset CNF register		
-	GPIOA->CRH &= ~GPIO_CRH_MODE8;					//Input mode
-	GPIOA->CRH |= GPIO_CRH_CNF8_1;					//Input with pull up/pull down
-	GPIOA->ODR &= ~GPIO_ODR_ODR8;					//Pull down						
+		NVIC_EnableIRQ(TIM2_IRQn); 		 						// Enable IRQ
+	}
+	//-----------------------------------------------------------------------------------------
+	void TIM3_Init(void)
+	{
+		RCC->APB1ENR |= RCC_APB1ENR_TIM3EN;  					// Enable TIM2 Periph clock
 
-	AFIO->EXTICR[2] &= ~AFIO_EXTICR3_EXTI8;			//Channel EXTI connected to PA 
+		TIM3->PSC = 7199; 										// 10000 tick/sec 	
+		TIM3->ARR = 4000;  										// 
+		TIM3->DIER |= TIM_DIER_UIE; 							// Enable tim2 interrupt
+		TIM3->CR1 &= ~TIM_CR1_CEN;  			 				// Stop count
 
-	EXTI->RTSR &= ~EXTI_RTSR_TR8;					//Rising trigger enabled for third channel
-	EXTI->FTSR |= EXTI_FTSR_TR8;					//Falling trigger disabled for third channel
+		NVIC_EnableIRQ(TIM3_IRQn); 		 						// Enable IRQ
+	}
+	//-----------------------------------------------------------------------------------------
+	void TIM4_Init(void)
+	{
+		RCC->APB1ENR |= RCC_APB1ENR_TIM4EN;  					// Enable TIM2 Periph clock
 
-	EXTI->PR |= EXTI_PR_PR8;						//Clear interrupt flag
-	EXTI->IMR |= EXTI_IMR_MR8;						//Enable interrupt
+		TIM4->PSC = 7199; 										// 10000 tick/sec 	
+		TIM4->ARR = 10000;  									// 
+		TIM4->DIER |= TIM_DIER_UIE; 							// Enable tim2 interrupt
+		TIM4->CR1 |= TIM_CR1_CEN;  			 					// Start count
 
-	//Right button
-	GPIOA->CRH &= ~GPIO_CRH_CNF9;					//Reset CNF register				
-	GPIOA->CRH &= ~GPIO_CRH_MODE9;					//Input mode
-	GPIOA->CRH |= GPIO_CRH_CNF9_1;					//Input with pull up/pull down
-	GPIOA->ODR &= ~GPIO_ODR_ODR9;					//Pull down	
+		NVIC_EnableIRQ(TIM4_IRQn); 		 						// Enable IRQ
+	}
+	//-----------------------------------------------------------------------------------------
+	void SSD1306_GPIO_init(void)
+	{
+		RCC->APB2ENR |= RCC_APB2ENR_IOPAEN;
+		//----------------------------
+		//SSD1306_RESET
+		GPIOA->CRL &= ~GPIO_CRL_CNF3;
+		GPIOA->CRL &= ~GPIO_CRL_MODE3;
 
-	AFIO->EXTICR[2] &= ~AFIO_EXTICR3_EXTI9;			//Channel EXTI connected to PA 
+		GPIOA->CRL &= ~GPIO_CRL_CNF3; 
+		GPIOA->CRL |= GPIO_CRL_MODE3_0;
 
-	EXTI->RTSR &= ~EXTI_RTSR_TR9;					//Rising trigger enabled for third channel
-	EXTI->FTSR |= EXTI_FTSR_TR9;					//Falling trigger disabled for third channel
+		//SSD1306_DC
+		GPIOA->CRL &= ~GPIO_CRL_CNF1;
+		GPIOA->CRL &= ~GPIO_CRL_MODE1;
 
-	EXTI->PR |= EXTI_PR_PR9;						//Clear interrupt flag
-	EXTI->IMR |= EXTI_IMR_MR9;						//Enable interrupt
+		GPIOA->CRL &= ~GPIO_CRL_CNF1; 
+		GPIOA->CRL |= GPIO_CRL_MODE1_0;
 
-	//Up button
-	GPIOA->CRH &= ~GPIO_CRH_CNF10;					//Reset CNF register				
-	GPIOA->CRH &= ~GPIO_CRH_MODE10;					//Input mode
-	GPIOA->CRH |= GPIO_CRH_CNF10_1;					//Input with pull up/pull down
-	GPIOA->ODR &= ~GPIO_ODR_ODR10;					//Pull down	
-
-	AFIO->EXTICR[2] &= ~AFIO_EXTICR3_EXTI10;		//Channel EXTI connected to PA 
-
-	EXTI->RTSR &= ~EXTI_RTSR_TR10;					//Rising trigger enabled for third channel
-	EXTI->FTSR |= EXTI_FTSR_TR10;					//Falling trigger disabled for third channel
-
-	EXTI->PR |= EXTI_PR_PR10;						//Clear interrupt flag
-	EXTI->IMR |= EXTI_IMR_MR10;						//Enable interrupt
-
-	//Down button
-	GPIOA->CRH &= ~GPIO_CRH_CNF11;					//Reset CNF register				
-	GPIOA->CRH &= ~GPIO_CRH_MODE11;					//Input mode
-	GPIOA->CRH |= GPIO_CRH_CNF11_1;					//Input with pull up/pull down
-	GPIOA->ODR &= ~GPIO_ODR_ODR11;					//Pull down	
-
-	AFIO->EXTICR[2] &= ~AFIO_EXTICR3_EXTI11;		//Channel EXTI connected to PA 
-
-	EXTI->RTSR &= ~EXTI_RTSR_TR11;					//Rising trigger enabled for third channel
-	EXTI->FTSR |= EXTI_FTSR_TR11;					//Falling trigger disabled for third channel
-
-	EXTI->PR |= EXTI_PR_PR11;						//Clear interrupt flag
-	EXTI->IMR |= EXTI_IMR_MR11;						//Enable interrupt
-
-	//Enter button
-	GPIOB->CRL &= ~GPIO_CRL_CNF6;					//Reset CNF register				
-	GPIOB->CRL &= ~GPIO_CRL_MODE6;					//Input mode
-	GPIOB->CRL |= GPIO_CRL_CNF6_1;					//Input with pull up/pull down
-	GPIOB->ODR &= ~GPIO_ODR_ODR6;					//Pull down	
-
-	AFIO->EXTICR[1] &= ~AFIO_EXTICR2_EXTI6;			//Channel EXTI connected to PA 
-	AFIO->EXTICR[1] |= AFIO_EXTICR2_EXTI6_PB;		//Channel EXTI connected to PB 
-
-	EXTI->RTSR &= ~EXTI_RTSR_TR6;					//Rising trigger enabled for third channel
-	EXTI->FTSR |= EXTI_FTSR_TR6;					//Falling trigger disabled for third channel
-
-	EXTI->PR |= EXTI_PR_PR6;						//Clear interrupt flag
-	EXTI->IMR |= EXTI_IMR_MR6;						//Enable interrupt
-
-	//Clear button
-	GPIOB->CRL &= ~GPIO_CRL_CNF7;					//Reset CNF register				
-	GPIOB->CRL &= ~GPIO_CRL_MODE7;					//Input mode
-	GPIOB->CRL |= GPIO_CRL_CNF7_1;					//Input with pull up/pull down
-	GPIOB->ODR &= ~GPIO_ODR_ODR7;					//Pull down	
-
-	AFIO->EXTICR[1] &= ~AFIO_EXTICR2_EXTI7;			//Channel EXTI connected to PA 
-	AFIO->EXTICR[1] |= AFIO_EXTICR2_EXTI7_PB;		//Channel EXTI connected to PB 
-
-	EXTI->RTSR &= ~EXTI_RTSR_TR7;					//Rising trigger enabled for third channel
-	EXTI->FTSR |= EXTI_FTSR_TR7;					//Falling trigger disabled for third channel
-
-	EXTI->PR |= EXTI_PR_PR7;						//Clear interrupt flag
-	EXTI->IMR |= EXTI_IMR_MR7;						//Enable interrupt
-
-	NVIC_EnableIRQ(EXTI9_5_IRQn);
-	NVIC_EnableIRQ(EXTI15_10_IRQn);
-}
+		//SSD1306_CS
+		GPIOA->CRL &= ~GPIO_CRL_CNF2;
+		GPIOA->CRL &= ~GPIO_CRL_MODE2;
+		
+		GPIOA->CRL &= ~GPIO_CRL_CNF2; 
+		GPIOA->CRL |= GPIO_CRL_MODE2_0;
+		//----------------------------
+	}
 //------------------------------------------------------------------------------------------
-void SPI1_Init(void)
-{
-	//Enable clock for SPI1 Рё GPIOA
-  	RCC->APB2ENR |= RCC_APB2ENR_SPI1EN; 
-	RCC->APB2ENR |= RCC_APB2ENR_IOPAEN;
-
-	/*********************************************/
-	/*** Setting pins GPIOA for work with SPI1 ***/
-	/*********************************************/
-	//PA7 - MOSI
-	//PA6 - MISO
-	//PA5 - SCK
-	
-	//First, clear all comfiguration bits
-  	GPIOA->CRL &= ~GPIO_CRL_CNF5;
-	GPIOA->CRL &= ~GPIO_CRL_CNF6;
-	GPIOA->CRL &= ~GPIO_CRL_CNF7;
-	
-	GPIOA->CRL &= ~GPIO_CRL_MODE5;
-	GPIOA->CRL &= ~GPIO_CRL_MODE5;
-	GPIOA->CRL &= ~GPIO_CRL_CNF5;
-	
-	
-	//Setting
-	//SCK
-	GPIOA->CRL |= GPIO_CRL_CNF5_1; 
-	GPIOA->CRL |= GPIO_CRL_MODE5;
-  
-	//MISO
-	GPIOA->CRL |= GPIO_CRL_CNF6_0; 
-	GPIOA->CRL &= ~GPIO_CRL_MODE6;
-  
-	//MOSI
-	GPIOA->CRL |= GPIO_CRL_CNF7_1; 
-	GPIOA->CRL |= GPIO_CRL_MODE7;
-	
-  
-	/**********************/
-	/***  Setting SPI1  ***/
-	/**********************/
-  
-	SPI1->CR1 |= SPI_CR1_BR_2;        			//Baud rate: F_PCLK/32
-	SPI1->CR1 &= ~SPI_CR1_CPOL;					//Clock polarity SPI: 0
-	SPI1->CR1 &= ~SPI_CR1_CPHA;					//Clock phase SPI: 0
-	SPI1->CR1 &= ~SPI_CR1_DFF;  				//Data frame format is 8 bit 
-	SPI1->CR1 &= ~SPI_CR1_LSBFIRST;    			//MSB first
-	SPI1->CR1 |= SPI_CR1_SSM;          			//Software NSS management SS
-	SPI1->CR1 |= SPI_CR1_SSI;          			//SS in high level
-  
-	SPI1->CR1 |= SPI_CR1_MSTR;         			//Master mode
-	
-	SPI1->CR1 |= SPI_CR1_SPE; 					//Enable SPI
-}
-//-----------------------------------------------------------------------------------------
-void SPI2_Init(void)
-{
-	//Enable clock for SPI2 and GPIOB
-	RCC->APB1ENR |= RCC_APB1ENR_SPI2EN; 
-	RCC->APB2ENR |= RCC_APB2ENR_IOPBEN;
-
-	/*********************************************/
-	/*** Setting pins GPIOB for work with SPI2 ***/
-	/*********************************************/
-	//PA13 - MOSI
-	//PA14 - MISO
-	//PA15 - SCK
-	
-	//First, clear all comfiguration bits
-	GPIOB->CRH &= ~GPIO_CRH_CNF13;
-	GPIOB->CRH &= ~GPIO_CRH_CNF14;
-	GPIOB->CRH &= ~GPIO_CRH_CNF15;
-	
-	GPIOB->CRH &= ~GPIO_CRH_MODE13;
-	GPIOB->CRH &= ~GPIO_CRH_MODE14;
-	GPIOB->CRH &= ~GPIO_CRH_MODE15;
-	
-	
-	//Setting
-	//SCK
-	GPIOB->CRH |= GPIO_CRH_CNF13_1; 
-	GPIOB->CRH |= GPIO_CRH_MODE13;
-  
-	//MISO
-	GPIOB->CRH |= GPIO_CRH_CNF14_0; 
-	GPIOB->CRH &= ~GPIO_CRH_MODE14;
-  
-	//MOSI
-	GPIOB->CRH |= GPIO_CRH_CNF15_1; 
-	GPIOB->CRH |= GPIO_CRH_MODE15;
-	
-  
-	/**********************/
-	/***  Setting SPI2  ***/
-	/**********************/
-  
-	SPI2->CR1 |= SPI_CR1_BR_2;        			//Baud rate: F_PCLK/32
-	SPI2->CR1 &= ~SPI_CR1_CPOL;					//Clock polarity SPI: 0
-	SPI2->CR1 &= ~SPI_CR1_CPHA;					//Clock phase SPI: 0
-	SPI2->CR1 &= ~SPI_CR1_DFF;  				//Data frame format is 8 bit 
-	SPI2->CR1 &= ~SPI_CR1_LSBFIRST;    			//MSB first
-	SPI2->CR1 |= SPI_CR1_SSM;          			//Software NSS management SS
-	SPI2->CR1 |= SPI_CR1_SSI;          			//SS in high level
-  
-	SPI2->CR1 |= SPI_CR1_MSTR;         			//Master mode
-	
-	SPI2->CR1 |= SPI_CR1_SPE; 					//Enable SPI	
-}
-//-----------------------------------------------------------------------------------------
-void USART3_Init(void)
-{	
-	RCC->APB1ENR |= RCC_APB1ENR_USART3EN;
-	RCC->APB2ENR |= RCC_APB2ENR_IOPBEN;
-	RCC->APB2ENR |= RCC_APB2ENR_AFIOEN; 
-	
-	//Tx
-	GPIOB->CRH |= GPIO_CRH_CNF10_1;
-	GPIOB->CRH |= GPIO_CRH_MODE10;
-	
-	//Rx
-	GPIOB->CRH |= GPIO_CRH_CNF11_0;
-	GPIOB->CRH &= ~GPIO_CRH_MODE11;
-	
-	USART3->BRR = 0x9C4; 
-	
-	USART3->CR1 |= USART_CR1_TE; 
-	USART3->CR1 |= USART_CR1_RE;
-	USART3->CR1 |= USART_CR1_UE;
-	
-	USART3->CR1 |= USART_CR1_RXNEIE; 
-
-	NVIC_EnableIRQ(USART3_IRQn);	
-}
-//-----------------------------------------------------------------------------------------
-void TIM1_Init(void)
-{
-	RCC->APB2ENR |= RCC_APB2ENR_TIM1EN;  					// Enable TIM2 Periph clock
-
-	TIM1->PSC = 7199; 										// 10000 tick/sec 	
-	TIM1->ARR = 10000;  									// 
-	TIM1->DIER |= TIM_DIER_UIE; 							// Enable tim2 interrupt
-	TIM1->CR1 |= TIM_CR1_CEN;  			 					// Start count
-
-  	NVIC_EnableIRQ(TIM1_UP_IRQn); 		 						// Enable IRQ
-}
-//-----------------------------------------------------------------------------------------
-void TIM2_Init(void)
-{
-	RCC->APB1ENR |= RCC_APB1ENR_TIM2EN;  					// Enable TIM2 Periph clock
-
-	TIM2->PSC = 7199; 										// 10000 tick/sec 	
-	TIM2->ARR = 10000;  									// 
-	TIM2->DIER |= TIM_DIER_UIE; 							// Enable tim2 interrupt
-	TIM2->CR1 |= TIM_CR1_CEN;  			 					// Start count
-
-  	NVIC_EnableIRQ(TIM2_IRQn); 		 						// Enable IRQ
-}
-//-----------------------------------------------------------------------------------------
-void TIM3_Init(void)
-{
-	RCC->APB1ENR |= RCC_APB1ENR_TIM3EN;  					// Enable TIM2 Periph clock
-
-	TIM3->PSC = 7199; 										// 10000 tick/sec 	
-	TIM3->ARR = 10000;  									// 
-	TIM3->DIER |= TIM_DIER_UIE; 							// Enable tim2 interrupt
-	TIM3->CR1 |= TIM_CR1_CEN;  			 					// Start count
-
-  	NVIC_EnableIRQ(TIM3_IRQn); 		 						// Enable IRQ
-}
-//-----------------------------------------------------------------------------------------
-void TIM4_Init(void)
-{
-	RCC->APB1ENR |= RCC_APB1ENR_TIM4EN;  					// Enable TIM2 Periph clock
-
-	TIM4->PSC = 7199; 										// 10000 tick/sec 	
-	TIM4->ARR = 10000;  									// 
-	TIM4->DIER |= TIM_DIER_UIE; 							// Enable tim2 interrupt
-	TIM4->CR1 |= TIM_CR1_CEN;  			 					// Start count
-
-  	NVIC_EnableIRQ(TIM4_IRQn); 		 						// Enable IRQ
-}
-//-----------------------------------------------------------------------------------------
-void SSD1306_GPIO_init(void)
-{
-	RCC->APB2ENR |= RCC_APB2ENR_IOPAEN;
-	//----------------------------
-	//SSD1306_RESET
-	GPIOA->CRL &= ~GPIO_CRL_CNF3;
-	GPIOA->CRL &= ~GPIO_CRL_MODE3;
-
-	GPIOA->CRL &= ~GPIO_CRL_CNF3; 
-	GPIOA->CRL |= GPIO_CRL_MODE3_0;
-
-	//SSD1306_DC
-	GPIOA->CRL &= ~GPIO_CRL_CNF1;
-	GPIOA->CRL &= ~GPIO_CRL_MODE1;
-
-	GPIOA->CRL &= ~GPIO_CRL_CNF1; 
-	GPIOA->CRL |= GPIO_CRL_MODE1_0;
-
-	//SSD1306_CS
-	GPIOA->CRL &= ~GPIO_CRL_CNF2;
-	GPIOA->CRL &= ~GPIO_CRL_MODE2;
-	
-	GPIOA->CRL &= ~GPIO_CRL_CNF2; 
-	GPIOA->CRL |= GPIO_CRL_MODE2_0;
-	//----------------------------
-}
 //**************************** Interconnection functions **********************************
 //-----------------------------------------------------------------------------------------
-void SPI1_Write(uint8_t *pBuff, uint16_t BuffLen)
-{
-	for(uint16_t i = 0; i < BuffLen; ++i)
+	void SPI1_Write(uint8_t *pBuff, uint16_t BuffLen)
 	{
-		//Expect while buffer ready
-		while(!(SPI1->SR & SPI_SR_TXE)) ;	
-		//Send data
-		SPI1->DR = pBuff[i];
-		//Delay caused display MCU handing ability
-		DelayMicro(7);
-	}	
-}
+		for(uint16_t i = 0; i < BuffLen; ++i)
+		{
+			//Expect while buffer ready
+			while(!(SPI1->SR & SPI_SR_TXE)) ;	
+			//Send data
+			SPI1->DR = pBuff[i];
+			//Delay caused display MCU handing ability
+			DelayMicro(7);
+		}	
+	}
 //------------------------------------------------------------------------------------------
 //********************************** Interrupts handlers ***********************************
 //------------------------------------------------------------------------------------------
-void EXTI9_5_IRQHandler(void)
-{
-	GPIOC->BSRR |= GPIO_BSRR_BS13;
-	EXTI->PR |= EXTI_PR_PR5; 
-	EXTI->PR |= EXTI_PR_PR6;
-	EXTI->PR |= EXTI_PR_PR7;
-	EXTI->PR |= EXTI_PR_PR8; 							//Reset interrupt
-	EXTI->PR |= EXTI_PR_PR9; 							//Reset interrupt
-
-	//++TriggeredNumber;
-	delay_ms(500);
-  	GPIOC->BSRR |= GPIO_BSRR_BR13;
-}
-//------------------------------------------------------------------------------------------
-void EXTI15_10_IRQHandler(void)
-{
-	GPIOC->BSRR |= GPIO_BSRR_BS13;
-	EXTI->PR |= EXTI_PR_PR10; 							//Reset interrupt
-	EXTI->PR |= EXTI_PR_PR11; 							//Reset interrupt
-	
-	//++TriggeredNumber;
-	delay_ms(500);
-  	GPIOC->BSRR |= GPIO_BSRR_BR13;
-}
-//------------------------------------------------------------------------------------------
-void USART3_IRQHandler(void)
-{
-	if(USART1->SR & USART_CR1_RXNEIE)
-	{
-		USART1->SR &= ~USART_CR1_RXNEIE;
-		
-		/*if(USART1->DR != 0)
+	void EXTI9_5_IRQHandler(void)
+	{	
+		if(EXTI->PR & EXTI_PR_PR6)
 		{
-			IsRecCon = true;
-			CanHanding = false;
-			RecUARTBuf[RecUARTNum++] = USART1->DR;
-		}*/
+			State.EnterBtnCounter = 0;
+			State.EnterBtnFlag = true;
+		}
+
+		if(EXTI->PR & EXTI_PR_PR7)
+		{
+			State.ClearBtnCounter = 0;
+			State.ClearBtnFlag = true;
+		}
+
+		if(EXTI->PR & EXTI_PR_PR8)
+		{
+			State.LeftBtnCounter = 0;
+			State.LeftBtnFlag = true;
+		}
+
+		if(EXTI->PR & EXTI_PR_PR9)
+		{
+			State.RightBtnCounter = 0;
+			State.RightBtnFlag = true;
+		}
+
+		//Reset interrupts
+		EXTI->PR |= EXTI_PR_PR6;
+		EXTI->PR |= EXTI_PR_PR7;
+		EXTI->PR |= EXTI_PR_PR8; 							
+		EXTI->PR |= EXTI_PR_PR9; 
+		
+		asm("nop");
+		asm("nop");
+		asm("nop");
+		asm("nop");
+		asm("nop");
+		asm("nop");
 	}
-}
-//------------------------------------------------------------------------------------------
-void TIM1_UP_IRQHandler(void)
-{
-	TIM1->SR &= ~TIM_SR_UIF; 
+	//------------------------------------------------------------------------------------------
+	void EXTI15_10_IRQHandler(void)
+	{
+		if(EXTI->PR & EXTI_PR_PR10)
+		{
+			State.UpBtnCounter = 0;
+			State.UpBtnFlag = true;
+		}
 
-	if (LED_En) 
-	{
-		//GPIOC->BSRR |= GPIO_BSRR_BS13;	
-	} 
-	else 
-	{
-		//GPIOC->BSRR |= GPIO_BSRR_BR13;
+		if(EXTI->PR & EXTI_PR_PR11)
+		{
+			State.DownBtnCounter = 0;
+			State.DownBtnFlag = true;
+		}
+
+		//Reset interrupts
+		EXTI->PR |= EXTI_PR_PR10; 						
+		EXTI->PR |= EXTI_PR_PR11; 						
+		
+		asm("nop");
+		asm("nop");
+		asm("nop");
+		asm("nop");
+		asm("nop");
+		asm("nop");
 	}
-
-	LED_En = !LED_En;
-}
-//------------------------------------------------------------------------------------------
-void TIM2_IRQHandler(void)
-{
-	TIM2->SR &= ~TIM_SR_UIF; 
-
-	if (LED_En) 
+	//------------------------------------------------------------------------------------------
+	void USART3_IRQHandler(void)
 	{
-		GPIOC->BSRR |= GPIO_BSRR_BS13;	
-	} 
-	else 
-	{
-		GPIOC->BSRR |= GPIO_BSRR_BR13;
+		if(USART1->SR & USART_CR1_RXNEIE)
+		{
+			USART1->SR &= ~USART_CR1_RXNEIE;
+			
+			/*if(USART1->DR != 0)
+			{
+				IsRecCon = true;
+				CanHanding = false;
+				RecUARTBuf[RecUARTNum++] = USART1->DR;
+			}*/
+		}
 	}
-
-	LED_En = !LED_En;
-}
-//------------------------------------------------------------------------------------------
-void TIM3_IRQHandler(void)
-{
-	TIM3->SR &= ~TIM_SR_UIF; 
-
-	if (LED_En) 
+	//------------------------------------------------------------------------------------------
+	void TIM1_UP_IRQHandler(void)
 	{
-		GPIOC->BSRR |= GPIO_BSRR_BS13;	
-	} 
-	else 
-	{
-		GPIOC->BSRR |= GPIO_BSRR_BR13;
+		TIM1->SR &= ~TIM_SR_UIF; 
+
+		if (LED_En) 
+		{
+			//GPIOC->BSRR |= GPIO_BSRR_BS13;	
+		} 
+		else 
+		{
+			//GPIOC->BSRR |= GPIO_BSRR_BR13;
+		}
+
+		LED_En = !LED_En;
 	}
-
-	LED_En = !LED_En;
-}
-//------------------------------------------------------------------------------------------
-void TIM4_IRQHandler(void)
-{
-	TIM4->SR &= ~TIM_SR_UIF; 
-
-	if (LED_En) 
+	//------------------------------------------------------------------------------------------
+	void TIM2_IRQHandler(void)
 	{
-		GPIOC->BSRR |= GPIO_BSRR_BS13;	
-	} 
-	else 
-	{
-		GPIOC->BSRR |= GPIO_BSRR_BR13;
+		TIM2->SR &= ~TIM_SR_UIF; 
+		TIM2->CNT = 100;
+
+		if(State.LeftBtnFlag && ((++State.LeftBtnCounter) > BUTTON_ITERATION_COUNT))
+		{
+			if(!(GPIOA->IDR & GPIO_IDR_IDR8))
+			{
+				State.LeftBtnFlag = false;
+				State.LeftBtn = true;
+			}
+			else
+				State.LeftBtnCounter = 0;
+		}
+		else if(State.RightBtnFlag && ((++State.RightBtnCounter) > BUTTON_ITERATION_COUNT))
+		{
+			if(!(GPIOA->IDR & GPIO_IDR_IDR9))
+			{
+				State.RightBtnFlag = false;
+				State.RightBtn = true;
+			}
+			else
+				State.RightBtnCounter = 0;
+		}
+		else if(State.UpBtnFlag && ((++State.UpBtnCounter) > BUTTON_ITERATION_COUNT))
+		{
+			if(!(GPIOA->IDR & GPIO_IDR_IDR10))
+			{
+				State.UpBtnFlag = false;
+				State.UpBtn = true;
+			}
+			else
+				State.UpBtnCounter = 0;
+		}
+		else if(State.DownBtnFlag && ((++State.DownBtnCounter) > BUTTON_ITERATION_COUNT))
+		{
+			if(!(GPIOA->IDR & GPIO_IDR_IDR11))
+			{
+				State.DownBtnFlag = false;
+				State.DownBtn = true;
+			}
+			else
+				State.DownBtnCounter = 0;
+		}
+		else if(State.EnterBtnFlag && ((++State.EnterBtnCounter) > BUTTON_ITERATION_COUNT))
+		{
+			if(!(GPIOB->IDR & GPIO_IDR_IDR6))
+			{
+				State.EnterBtnFlag = false;
+				State.EnterBtn = true;
+			}
+			else
+				State.EnterBtnCounter = 0;
+		}
+		else if(State.ClearBtnFlag && ((++State.ClearBtnCounter) > BUTTON_ITERATION_COUNT))
+		{
+			if(!(GPIOB->IDR & GPIO_IDR_IDR7))
+			{
+				State.ClearBtnFlag = false;
+				State.ClearBtn = true;
+			}
+			else
+				State.ClearBtnCounter = 0;
+		}
 	}
+	//------------------------------------------------------------------------------------------
+	void TIM3_IRQHandler(void)
+	{
+		TIM3->SR &= ~TIM_SR_UIF; 
+		Timer3Disable();
+		TIM3->CNT = 4000;
+	}
+	//------------------------------------------------------------------------------------------
+	void TIM4_IRQHandler(void)
+	{
+		TIM4->SR &= ~TIM_SR_UIF; 
 
-	LED_En = !LED_En;
-}
+		if (LED_En) 
+		{
+			GPIOC->BSRR |= GPIO_BSRR_BS13;	
+		} 
+		else 
+		{
+			GPIOC->BSRR |= GPIO_BSRR_BR13;
+		}
+
+		LED_En = !LED_En;
+	}
 //------------------------------------------------------------------------------------------
 //**************************** Working functions *******************************************
 //------------------------------------------------------------------------------------------
-void DelayMicro(uint32_t time)
-{
-	for(int i = 0; i < 6; ++i)
-		delay(time);
-}
-//------------------------------------------------------------------------------------------
-void delay_ms(uint32_t time)
-{
-	DelayMicro(1000*time);
-}
-//------------------------------------------------------------------------------------------
-void delay(uint32_t time)
-{		
-	uint32_t i;
-	for(i = 0; i < time; i++){}
-}
-//------------------------------------------------------------------------------------------
+	void DelayMicro(uint32_t time)
+	{
+		for(int i = 0; i < 6; ++i)
+			delay(time);
+	}
+	//------------------------------------------------------------------------------------------
+	void delay_ms(uint32_t time)
+	{
+		DelayMicro(1000*time);
+	}
+	//------------------------------------------------------------------------------------------
+	void delay(uint32_t time)
+	{		
+		uint32_t i;
+		for(i = 0; i < time; i++){}
+	}
+	//------------------------------------------------------------------------------------------
+	void UpdateScreen(void)
+	{
+		switch(State.CurrentPageNumber)
+		{
+			case 0 :
+				disp1color_FillScreenbuff(0);
+				
+				disp1color_printf(0, 1, FONTID_6X8M,  "             Готов  к  работе\n\r");
+				disp1color_printf(118, 1, FONTID_6X8M, "%c", 0x81);
+
+				//disp1color_printf(0, 1, FONTID_6X8M,  "             Выход  на  режим\n\r");
+				//disp1color_printf(118, 1, FONTID_6X8M, "x");
+
+				disp1color_DrawLine(0, 10, 127, 10);
+				disp1color_printf(28, 23, FONTID_10X16F, "32.537 %cC", 0x80);
+
+				disp1color_printf(0, 46, FONTID_6X8M, " %d|%d|%d|%d|%d|%d  ", bt1, bt2, bt3, bt4, bt5, bt6); 
+
+				ResetState();
+
+				disp1color_DrawLine(0, 54, 127, 54);
+
+				disp1color_printf(43, 57, FONTID_6X8M, "R1: 0.001044 Ом");  
+
+				disp1color_DrawLine(34, 59, 36, 57);
+				disp1color_DrawLine(36, 57, 38, 59);
+				disp1color_DrawLine(37, 59, 35, 59);
+
+				disp1color_DrawLine(34, 61, 36, 63);
+				disp1color_DrawLine(36, 63, 38, 61);
+				disp1color_DrawLine(37, 61, 35, 61);
+
+				if(Mode_Rectangle)
+					disp1color_DrawRectangle(MODE_RECT_L - 1, MODE_RECT_T - 1, MODE_RECT_L + 3, MODE_RECT_T + 3);	
+				else
+					disp1color_DrawRectangle(MODE_RECT_L, MODE_RECT_T, MODE_RECT_L + 2, MODE_RECT_T + 2);
+
+				disp1color_UpdateFromBuff();
+
+				Mode_Rectangle = !Mode_Rectangle;
+				break;
+			case 1 :
+
+				break;
+			case 2 :
+
+				break;
+			case 3 :
+
+				break;
+			default:
+				break;
+		}
+	}
 

@@ -1,5 +1,7 @@
 #include "state.h"
 
+struct StateType State;
+
 //”станавливает все значени€ состо€ни€ по умолчанию
 void ResetState(void)
 {

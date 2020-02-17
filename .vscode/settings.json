@@ -3,6 +3,7 @@
         "main.h": "c",
         "state.h": "c",
         "stm32f10x.h": "c",
-        "disp1color.h": "c"
+        "disp1color.h": "c",
+        "stdbool.h": "c"
     }
 }

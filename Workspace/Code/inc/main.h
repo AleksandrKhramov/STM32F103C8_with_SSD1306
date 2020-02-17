@@ -6,14 +6,23 @@
 #include "SSD1306.h"
 #include "disp1color.h"
 #include "font.h"
-//#include "state.h"
+#include "state.h"
 
-
+                                    
 #define SEL_RECT_L                  10
 #define SEL_RECT_T                  16
 #define MODE_RECT_L                 3
 #define MODE_RECT_T                 3
 
+#define BUTTON_ITERATION_COUNT 80
+
+#define Timer2Enable();             TIM2->CR1 |= TIM_CR1_CEN;
+#define Timer2Disable();            TIM2->CR1 &= ~TIM_CR1_CEN;
+#define IsTimer2Enabled()           (TIM2->CR1 & TIM_CR1_CEN)
+
+#define Timer3Enable();             TIM3->CR1 |= TIM_CR1_CEN;
+#define Timer3Disable();            TIM3->CR1 &= ~TIM_CR1_CEN;
+#define IsTimer3Enabled()           (TIM3->CR1 & TIM_CR1_CEN)
 
 //Initialization functions
 void GPIO_Init(void);
@@ -26,17 +35,15 @@ void TIM2_Init(void);
 void TIM3_Init(void);
 void TIM4_Init(void);
 
-
 //Interconnection functions
 void SPI1_Write(uint8_t *pBuff, uint16_t BuffLen);
 
-//User functions
+//Working functions
 void delay(uint32_t time);
 void DelayMicro(uint32_t time);
 void delay_ms(uint32_t time);
+void UpdateScreen(void);
 	
-//Common purpose functions
-
 //SSD1306 functions
 void SSD1306_GPIO_init(void);
 
