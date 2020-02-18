@@ -7,14 +7,17 @@
 #include "disp1color.h"
 #include "font.h"
 #include "state.h"
-
                                     
 #define SEL_RECT_L                  10
 #define SEL_RECT_T                  16
 #define MODE_RECT_L                 3
 #define MODE_RECT_T                 3
 
-#define BUTTON_ITERATION_COUNT 80
+#define BUTTON_ITERATION_COUNT      160
+
+//Head types
+#define HEAD_WORK_MODE              0
+#define HEAD_TEMPERATURE            1 
 
 #define Timer2Enable();             TIM2->CR1 |= TIM_CR1_CEN;
 #define Timer2Disable();            TIM2->CR1 &= ~TIM_CR1_CEN;
@@ -43,6 +46,7 @@ void delay(uint32_t time);
 void DelayMicro(uint32_t time);
 void delay_ms(uint32_t time);
 void UpdateScreen(void);
+void DisplayHead(uint8_t HeadType);
 	
 //SSD1306 functions
 void SSD1306_GPIO_init(void);

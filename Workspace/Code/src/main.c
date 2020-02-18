@@ -2,6 +2,7 @@
 
 bool Mode_Rectangle = false;
 bool LED_En = false;
+uint8_t SelNum = 0;
 uint32_t bt1 = 0;
 uint32_t bt2 = 0;
 uint32_t bt3 = 0;
@@ -27,21 +28,39 @@ int main()
 
 	while(1)
 	{
+
+		__disable_irq();
+
 		if((State.LeftBtnFlag && !State.LeftBtn) || (State.RightBtnFlag && !State.RightBtn) || 
 		   (State.UpBtnFlag && !State.UpBtn) || (State.DownBtnFlag && !State.DownBtn) ||
 		   (State.EnterBtnFlag && !State.EnterBtn) || (State.ClearBtnFlag && !State.ClearBtn))
 		{
 			Timer2Enable();
 		}
-
-		delay_ms(50);
 		
-		__disable_irq();
-
 		if(State.LeftBtn)
+		{
 			++bt1;
+			if(!State.EditingMode)
+			{
+				if(State.CurrentPageNumber > 0)
+				{
+					--State.CurrentPageNumber;	
+				}
+			}
+		}
+			
 		if(State.RightBtn)
+		{
 			++bt2;
+			if(!State.EditingMode)
+			{
+				if(State.CurrentPageNumber < 4)
+				{
+					++State.CurrentPageNumber;	
+				}
+			}
+		}
 		if(State.UpBtn)
 			++bt3;
 		if(State.DownBtn)
@@ -67,7 +86,7 @@ int main()
 
 		__enable_irq();
 
-		delay_ms(50);
+		delay_ms(100);
 	}
 }
 //**************************  Initialization functions  ***********************************
@@ -686,28 +705,23 @@ int main()
 	//------------------------------------------------------------------------------------------
 	void UpdateScreen(void)
 	{
+		disp1color_FillScreenbuff(0);
+
 		switch(State.CurrentPageNumber)
 		{
 			case 0 :
-				disp1color_FillScreenbuff(0);
-				
-				disp1color_printf(0, 1, FONTID_6X8M,  "             √отов  к  работе\n\r");
-				disp1color_printf(118, 1, FONTID_6X8M, "%c", 0x81);
+				DisplayHead(0);
 
-				//disp1color_printf(0, 1, FONTID_6X8M,  "             ¬ыход  на  режим\n\r");
-				//disp1color_printf(118, 1, FONTID_6X8M, "x");
+				//Draw temperature
+				disp1color_printf(28, 23, FONTID_10X16F, "%.3f %cC", State.Temperature, 0x80);
 
-				disp1color_DrawLine(0, 10, 127, 10);
-				disp1color_printf(28, 23, FONTID_10X16F, "32.537 %cC", 0x80);
-
+				//Debug
 				disp1color_printf(0, 46, FONTID_6X8M, " %d|%d|%d|%d|%d|%d  ", bt1, bt2, bt3, bt4, bt5, bt6); 
 
-				ResetState();
-
+				//Draw bottom separator
 				disp1color_DrawLine(0, 54, 127, 54);
 
-				disp1color_printf(43, 57, FONTID_6X8M, "R1: 0.001044 ќм");  
-
+				//Draw triangles
 				disp1color_DrawLine(34, 59, 36, 57);
 				disp1color_DrawLine(36, 57, 38, 59);
 				disp1color_DrawLine(37, 59, 35, 59);
@@ -716,20 +730,58 @@ int main()
 				disp1color_DrawLine(36, 63, 38, 61);
 				disp1color_DrawLine(37, 61, 35, 61);
 
-				if(Mode_Rectangle)
-					disp1color_DrawRectangle(MODE_RECT_L - 1, MODE_RECT_T - 1, MODE_RECT_L + 3, MODE_RECT_T + 3);	
-				else
-					disp1color_DrawRectangle(MODE_RECT_L, MODE_RECT_T, MODE_RECT_L + 2, MODE_RECT_T + 2);
-
-				disp1color_UpdateFromBuff();
-
-				Mode_Rectangle = !Mode_Rectangle;
+				//Draw bottom writting
+				switch(State.CurrentPage1BottomResistor)
+				{
+					case 0 :
+						disp1color_printf(43, 57, FONTID_6X8M, "R1: %.6f ќм", State.R1);
+						break;
+					case 1 :
+						disp1color_printf(43, 57, FONTID_6X8M, "R2: %.6f ќм", State.R2);
+						break;
+					case 2 :
+						disp1color_printf(43, 57, FONTID_6X8M, "R3: %.6f ќм", State.R3);
+						break;
+					case 3 :
+						disp1color_printf(43, 57, FONTID_6X8M, "R4: %.6f ќм", State.R4);
+						break;
+					case 4 :
+						disp1color_printf(43, 57, FONTID_6X8M, "R5: %.5f ќм", State.R5);
+						break;
+					case 5 :
+						disp1color_printf(43, 57, FONTID_6X8M, "R6: %.4f ќм", State.R6);
+						break;
+					case 6 :
+						disp1color_printf(43, 57, FONTID_6X8M, "R7: %.3f ќм", State.R7);
+						break;
+					case 7 :
+						disp1color_printf(43, 57, FONTID_6X8M, "R8: %.2f ќм", State.R8);
+						break;
+					case 8 :
+						disp1color_printf(43, 57, FONTID_6X8M, "R9: %.1f ќм", State.R9);
+						break;
+					default:
+						break;
+				}
+				
 				break;
 			case 1 :
+				DisplayHead(1);
 
+				disp1color_printf(0, 13, FONTID_6X8M, "          R1: 0.001044 ќм\n\r"  
+														"          R2: 0.010014 ќм\n\r"
+														"          R3: 0.101004 ќм\n\r"
+														"          R4: 1.000004 ќм\n\r"
+														"          R5: 10.01044 ќм");
 				break;
 			case 2 :
+				DisplayHead(1);
 
+				disp1color_printf(0, 12, FONTID_6X8M,  "                        ћера є1\n\r  ласс точности: 0.0005");
+				disp1color_DrawLine(2, 30, 124, 30);
+				disp1color_printf(0, 38, FONTID_6X8M, " Rд: 0.001044 ќм     ¬вод");
+				disp1color_DrawLine(2, 54, 124, 54);
+				disp1color_printf(0, 57, FONTID_6X8M,  " Rн: 0.01 ќм    Pн: 0.05 ¬т");
 				break;
 			case 3 :
 
@@ -737,5 +789,40 @@ int main()
 			default:
 				break;
 		}
+
+		Mode_Rectangle = !Mode_Rectangle;
+		disp1color_UpdateFromBuff();
+	}
+
+	void DisplayHead(uint8_t HeadType)
+	{
+		switch(HeadType)
+		{
+			case HEAD_WORK_MODE :
+				if(State.ReadyToWork)
+				{
+					disp1color_printf(0, 1, FONTID_6X8M,  "             √отов  к  работе\n\r");
+					disp1color_printf(118, 1, FONTID_6X8M, "%c", 0x81);
+				}
+				else
+				{
+					disp1color_printf(0, 1, FONTID_6X8M,  "             ¬ыход  на  режим\n\r");
+					disp1color_printf(118, 1, FONTID_6X8M, "x");
+				}
+				break;
+			case HEAD_TEMPERATURE :
+				disp1color_printf(0, 1, FONTID_6X8M,  "               T: %.3f %cC\n\r",  State.Temperature, 0x80);
+				if(State.ReadyToWork)
+					disp1color_printf(118, 1, FONTID_6X8M, "%c", 0x81);
+				else
+					disp1color_printf(118, 1, FONTID_6X8M, "x");
+				break;
+		}
+
+		if(Mode_Rectangle)
+			disp1color_DrawRectangle(MODE_RECT_L - 1, MODE_RECT_T - 1, MODE_RECT_L + 3, MODE_RECT_T + 3);	
+		else
+			disp1color_DrawRectangle(MODE_RECT_L, MODE_RECT_T, MODE_RECT_L + 2, MODE_RECT_T + 2);
+		disp1color_DrawLine(0, 10, 127, 10);	
 	}
 

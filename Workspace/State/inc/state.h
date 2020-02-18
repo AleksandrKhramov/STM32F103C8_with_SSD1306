@@ -33,18 +33,27 @@ struct StateType
     //Pages
     uint8_t CurrentPageNumber : 4;
 
-    //Measured resistance
-    char R1[8];
-    char R2[8];
-    char R3[8];
-    char R4[8];
-    char R5[8];
-    char R6[8];
-    char R7[8];
-    char R8[8];
-    char R9[8];
+    //Measured resistances
+    float R1;
+    float R2;
+    float R3;
+    float R4;
+    float R5;
+    float R6;
+    float R7;
+    float R8;
+    float R9;
 
-    uint8_t ResistorsCount;
+	//Temperature
+	float Temperature;
+
+	//Resistors display information
+    uint8_t ResistorsCount : 3;
+	uint8_t CurrentPage1BottomResistor : 3;
+
+	bool ReadyToWork : 1;
+
+	bool EditingMode : 1;
 };
 
 //”станавливает все значени€ состо€ни€ по умолчанию
