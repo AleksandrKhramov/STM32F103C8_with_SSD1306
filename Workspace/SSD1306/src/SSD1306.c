@@ -1,5 +1,7 @@
 #include "SSD1306.h"
 
+extern struct StateType State;
+
 void WriteCmd1306(uint8_t Cmd, uint8_t *pBuff, uint16_t BuffLen)
 {
     SSD1306_DC_LOW();
@@ -40,7 +42,7 @@ void SSD1306_Init(void)
     SSD1306_SetSegmentRemap(0);          // *меняет направление заполнение матрицы из буфера кадра (вертикаль/горизонталь)
     SSD1306_SetCOMoutScanDirection(0);    // *переворачивает оторбражение на матрице (только по вертикали)
     SSD1306_SetCOMPinsConfig(1, 0);
-    SSD1306_SetContrast(127);
+    SSD1306_SetContrast((100/State.Brigtness)*255);
     SSD1306_SetPrechargePeriod(2, 2);
     SSD1306_SetVCOMHDeselectLevel(0x40);
     SSD1306_AllPixRAM();

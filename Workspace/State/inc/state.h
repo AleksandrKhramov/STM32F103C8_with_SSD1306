@@ -31,7 +31,20 @@ struct StateType
 	bool ClearBtnFlag : 1;
 
     //Pages
-    uint8_t CurrentPageNumber : 4;
+    uint8_t CurrentPageNumber : 3;
+
+	bool EditingMode : 1;
+
+	//Nominals
+	float R1Nom;
+	float R2Nom;
+	float R3Nom;
+	float R4Nom;
+	float R5Nom;
+	float R6Nom;
+	float R7Nom;
+	float R8Nom;
+	float R9Nom;
 
     //Measured resistances
     float R1;
@@ -44,16 +57,56 @@ struct StateType
     float R8;
     float R9;
 
+	//Powers
+	float P1;
+    float P2;
+    float P3;
+    float P4;
+    float P5;
+    float P6;
+    float P7;
+    float P8;
+    float P9;
+
+	//Categories
+	const char* R1Cat;
+	const char* R2Cat;
+	const char* R3Cat;
+	const char* R4Cat;
+	const char* R5Cat;
+	const char* R6Cat;
+	const char* R7Cat;
+	const char* R8Cat;
+	const char* R9Cat;
+
+	//Accuracy classes
+	float R1AccuracyClass;
+	float R2AccuracyClass;
+	float R3AccuracyClass;
+	float R4AccuracyClass;
+	float R5AccuracyClass;
+	float R6AccuracyClass;
+	float R7AccuracyClass;
+	float R8AccuracyClass;
+	float R9AccuracyClass;
+
 	//Temperature
 	float Temperature;
 
 	//Resistors display information
-    uint8_t ResistorsCount : 3;
-	uint8_t CurrentPage1BottomResistor : 3;
+    uint8_t ResistorsCount : 4;
+	uint8_t CurrentPage1BottomResistor : 4;
 
 	bool ReadyToWork : 1;
 
-	bool EditingMode : 1;
+	uint8_t CurrentPage2ResistorsSet : 3;
+	uint8_t ChosenPage2Resistor : 3;
+
+	bool ModeRectangle : 1;
+
+	uint8_t Brigtness;
+
+	uint8_t CurrentPage4EditingValue;
 };
 
 //”станавливает все значени€ состо€ни€ по умолчанию

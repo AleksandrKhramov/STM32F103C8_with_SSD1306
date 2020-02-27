@@ -1,14 +1,15 @@
 #include "main.h"
 
-bool Mode_Rectangle = false;
-bool LED_En = false;
-uint8_t SelNum = 0;
-uint32_t bt1 = 0;
-uint32_t bt2 = 0;
-uint32_t bt3 = 0;
-uint32_t bt4 = 0;
-uint32_t bt5 = 0;
-uint32_t bt6 = 0;
+/*		 debug 		*/
+
+	uint32_t bt1 = 0;
+	uint32_t bt2 = 0;
+	uint32_t bt3 = 0;
+	uint32_t bt4 = 0;
+	uint32_t bt5 = 0;
+	uint32_t bt6 = 0;
+
+
 extern struct StateType State;
 
 int main()
@@ -17,75 +18,21 @@ int main()
 	GPIO_Init();
 	SPI1_Init();	
 	SPI2_Init();
-	SSD1306_Init();	
 	USART3_Init();
 	//TIM1_Init();`
 	TIM2_Init();
-	//TIM3_Init();
+	TIM3_Init();
 	//TIM4_Init();
-	
-	ResetState();
 
+	ResetState();
+	SSD1306_Init();
+	
 	while(1)
 	{
-
 		__disable_irq();
-
-		if((State.LeftBtnFlag && !State.LeftBtn) || (State.RightBtnFlag && !State.RightBtn) || 
-		   (State.UpBtnFlag && !State.UpBtn) || (State.DownBtnFlag && !State.DownBtn) ||
-		   (State.EnterBtnFlag && !State.EnterBtn) || (State.ClearBtnFlag && !State.ClearBtn))
-		{
-			Timer2Enable();
-		}
-		
-		if(State.LeftBtn)
-		{
-			++bt1;
-			if(!State.EditingMode)
-			{
-				if(State.CurrentPageNumber > 0)
-				{
-					--State.CurrentPageNumber;	
-				}
-			}
-		}
-			
-		if(State.RightBtn)
-		{
-			++bt2;
-			if(!State.EditingMode)
-			{
-				if(State.CurrentPageNumber < 4)
-				{
-					++State.CurrentPageNumber;	
-				}
-			}
-		}
-		if(State.UpBtn)
-			++bt3;
-		if(State.DownBtn)
-			++bt4;
-		if(State.EnterBtn)
-			++bt5;
-		if(State.ClearBtn)
-			++bt6;
-
+		HandButtonsClicks();
 		UpdateScreen();	
-
-		State.LeftBtn = false;
-		State.RightBtn = false;
-		State.UpBtn = false;
-		State.DownBtn = false;
-		State.EnterBtn = false;
-		State.ClearBtn = false;
-		
-		if(!State.LeftBtnFlag && !State.RightBtnFlag && !State.UpBtnFlag && !State.DownBtnFlag && !State.EnterBtnFlag && !State.ClearBtnFlag)
-		{
-			Timer2Disable(); 
-		}
-
 		__enable_irq();
-
 		delay_ms(100);
 	}
 }
@@ -424,7 +371,7 @@ int main()
 		TIM2->PSC = 7199; 										// 10000 tick/sec 	
 		TIM2->ARR = 100;  										// 
 		TIM2->DIER |= TIM_DIER_UIE; 							// Enable tim2 interrupt
-		TIM2->CR1 &= ~TIM_CR1_CEN;  			 				// Stop count
+		Timer3Disable();  			 							// Stop count
 
 		NVIC_EnableIRQ(TIM2_IRQn); 		 						// Enable IRQ
 	}
@@ -434,11 +381,10 @@ int main()
 		RCC->APB1ENR |= RCC_APB1ENR_TIM3EN;  					// Enable TIM2 Periph clock
 
 		TIM3->PSC = 7199; 										// 10000 tick/sec 	
-		TIM3->ARR = 4000;  										// 
+		TIM3->ARR = 10000;  										// 
 		TIM3->DIER |= TIM_DIER_UIE; 							// Enable tim2 interrupt
-		TIM3->CR1 &= ~TIM_CR1_CEN;  			 				// Stop count
-
 		NVIC_EnableIRQ(TIM3_IRQn); 		 						// Enable IRQ
+		Timer3Enable(); 
 	}
 	//-----------------------------------------------------------------------------------------
 	void TIM4_Init(void)
@@ -494,6 +440,80 @@ int main()
 			DelayMicro(7);
 		}	
 	}
+//------------------------------------------------------------------------------------------
+	void MakeMODBUSMessage(uint8_t Function, uint8_t *Buffer, uint8_t Count)
+	{
+
+	}
+//------------------------------------------------------------------------------------------
+	void SendMODBUSMessage()
+	{
+
+	}
+//------------------------------------------------------------------------------------------
+	uint16_t MakeCRC16(uint8_t* Buffer, uint16_t Count)
+	{
+		uint16_t CRC = 0xFFFF;
+		uint8_t t;
+
+		for (uint16_t ByteNumber = 0; ByteNumber < Count; ++ByteNumber)
+		{
+			t = Buffer[ByteNumber];
+			CRC ^= t;          // XOR byte into least sig. byte of crc
+
+			for (int i = 0; i < 8; ++i) {    // Loop over each bit
+				if ((CRC & 0x0001) == 1){
+					CRC >>= 1;
+					CRC ^= 0xA001;
+				}
+				else
+					CRC >>= 1;
+			}
+		}
+		return CRC;
+	}
+//------------------------------------------------------------------------------------------
+	uint8_t HandleMODBUSRequest(uint8_t *Buffer, uint8_t Count)
+	{
+		if(Count < 5)
+			return COUNT_LESS_THAN_MINIMUM;
+
+		uint16_t CRC = MakeCRC16(Buffer, Count - 2);
+
+		if(((CRC >> 8) != Buffer[Count - 2]) || ((CRC & 0x00FF) != Buffer[Count - 1]))
+			return CRC_ERROR;
+
+		switch(Buffer[0])
+		{
+			case READ_MODBUS_FUNCTION :
+				if(((Buffer[1] >= GENERAL_PURPOSE_BEGIN_REGISTER) && (Buffer[1] <= GENERAL_PURPOSE_END_REGISTER)) || 
+				   ((Buffer[1] >= RESISTORS_DESCRIPTION_BEGIN_REGISTER) && (Buffer[1] <= (RESISTORS_DESCRIPTION_BEGIN_REGISTER + State.ResistorsCount - 1))))
+				{
+					
+				}
+				else
+				{
+					//+++++++++++++++++ Handle Register Error ++++++++++++++++++
+				}
+ 				break;
+			case WRITE_MODBUS_FUNCTION :
+				if(((Buffer[1] >= GENERAL_PURPOSE_BEGIN_REGISTER) && (Buffer[1] <= GENERAL_PURPOSE_END_REGISTER)) || 
+				   ((Buffer[1] >= RESISTORS_DESCRIPTION_BEGIN_REGISTER) && (Buffer[1] <= (RESISTORS_DESCRIPTION_BEGIN_REGISTER + State.ResistorsCount - 1))))
+				{
+					
+				}
+				else
+				{
+					//+++++++++++++++++ Handle Register Error ++++++++++++++++++
+				}
+				break;
+			default:
+				//Buffer[0]
+				break;
+		} 
+	}
+//------------------------------------------------------------------------------------------
+
 //------------------------------------------------------------------------------------------
 //********************************** Interrupts handlers ***********************************
 //------------------------------------------------------------------------------------------
@@ -581,17 +601,6 @@ int main()
 	void TIM1_UP_IRQHandler(void)
 	{
 		TIM1->SR &= ~TIM_SR_UIF; 
-
-		if (LED_En) 
-		{
-			//GPIOC->BSRR |= GPIO_BSRR_BS13;	
-		} 
-		else 
-		{
-			//GPIOC->BSRR |= GPIO_BSRR_BR13;
-		}
-
-		LED_En = !LED_En;
 	}
 	//------------------------------------------------------------------------------------------
 	void TIM2_IRQHandler(void)
@@ -664,24 +673,13 @@ int main()
 	void TIM3_IRQHandler(void)
 	{
 		TIM3->SR &= ~TIM_SR_UIF; 
-		Timer3Disable();
-		TIM3->CNT = 4000;
+
+		State.ModeRectangle = !State.ModeRectangle;
 	}
 	//------------------------------------------------------------------------------------------
 	void TIM4_IRQHandler(void)
 	{
 		TIM4->SR &= ~TIM_SR_UIF; 
-
-		if (LED_En) 
-		{
-			GPIOC->BSRR |= GPIO_BSRR_BS13;	
-		} 
-		else 
-		{
-			GPIOC->BSRR |= GPIO_BSRR_BR13;
-		}
-
-		LED_En = !LED_En;
 	}
 //------------------------------------------------------------------------------------------
 //**************************** Working functions *******************************************
@@ -716,84 +714,95 @@ int main()
 				disp1color_printf(28, 23, FONTID_10X16F, "%.3f %cC", State.Temperature, 0x80);
 
 				//Debug
-				disp1color_printf(0, 46, FONTID_6X8M, " %d|%d|%d|%d|%d|%d  ", bt1, bt2, bt3, bt4, bt5, bt6); 
+				//disp1color_printf(0, 46, FONTID_6X8M, " %d|%d|%d|%d|%d|%d  ", bt1, bt2, bt3, bt4, bt5, bt6); 
 
 				//Draw bottom separator
 				disp1color_DrawLine(0, 54, 127, 54);
 
-				//Draw triangles
-				disp1color_DrawLine(34, 59, 36, 57);
-				disp1color_DrawLine(36, 57, 38, 59);
-				disp1color_DrawLine(37, 59, 35, 59);
-
-				disp1color_DrawLine(34, 61, 36, 63);
-				disp1color_DrawLine(36, 63, 38, 61);
-				disp1color_DrawLine(37, 61, 35, 61);
-
-				//Draw bottom writting
-				switch(State.CurrentPage1BottomResistor)
-				{
-					case 0 :
-						disp1color_printf(43, 57, FONTID_6X8M, "R1: %.6f Îì", State.R1);
-						break;
-					case 1 :
-						disp1color_printf(43, 57, FONTID_6X8M, "R2: %.6f Îì", State.R2);
-						break;
-					case 2 :
-						disp1color_printf(43, 57, FONTID_6X8M, "R3: %.6f Îì", State.R3);
-						break;
-					case 3 :
-						disp1color_printf(43, 57, FONTID_6X8M, "R4: %.6f Îì", State.R4);
-						break;
-					case 4 :
-						disp1color_printf(43, 57, FONTID_6X8M, "R5: %.5f Îì", State.R5);
-						break;
-					case 5 :
-						disp1color_printf(43, 57, FONTID_6X8M, "R6: %.4f Îì", State.R6);
-						break;
-					case 6 :
-						disp1color_printf(43, 57, FONTID_6X8M, "R7: %.3f Îì", State.R7);
-						break;
-					case 7 :
-						disp1color_printf(43, 57, FONTID_6X8M, "R8: %.2f Îì", State.R8);
-						break;
-					case 8 :
-						disp1color_printf(43, 57, FONTID_6X8M, "R9: %.1f Îì", State.R9);
-						break;
-					default:
-						break;
-				}
-				
+				//Draw bottom writting with triangles
+				disp1color_printf(PAGE1_BOTTOM_WRITTING_LEFT, 57, FONTID_6X8M, "%c R%d: %g Îì", 0x82, (State.CurrentPage1BottomResistor + 1), *(&State.R1 + State.CurrentPage1BottomResistor));
 				break;
 			case 1 :
 				DisplayHead(1);
 
-				disp1color_printf(0, 13, FONTID_6X8M, "          R1: 0.001044 Îì\n\r"  
-														"          R2: 0.010014 Îì\n\r"
-														"          R3: 0.101004 Îì\n\r"
-														"          R4: 1.000004 Îì\n\r"
-														"          R5: 10.01044 Îì");
+				if((State.ResistorsCount <= 4) && (State.CurrentPage2ResistorsSet > 0))
+					State.CurrentPage2ResistorsSet = 0;
+
+				disp1color_printf(PAGE2_RESISTORS_LEFT, PAGE2_RESISTORS_TOP, FONTID_6X8M, "R%d: %g Îì", (State.CurrentPage2ResistorsSet + 1), *(&State.R1 + State.CurrentPage2ResistorsSet));  
+				disp1color_printf(PAGE2_RESISTORS_LEFT, PAGE2_RESISTORS_TOP + 1*PAGE2_RESISTORS_VERTICAL_STEP, FONTID_6X8M, "R%d: %g Îì", (State.CurrentPage2ResistorsSet + 2), *(&State.R1 + 1 + State.CurrentPage2ResistorsSet));
+				disp1color_printf(PAGE2_RESISTORS_LEFT, PAGE2_RESISTORS_TOP + 2*PAGE2_RESISTORS_VERTICAL_STEP, FONTID_6X8M, "R%d: %g Îì", (State.CurrentPage2ResistorsSet + 3), *(&State.R1 + 2 + State.CurrentPage2ResistorsSet));
+				disp1color_printf(PAGE2_RESISTORS_LEFT, PAGE2_RESISTORS_TOP + 3*PAGE2_RESISTORS_VERTICAL_STEP, FONTID_6X8M, "R%d: %g Îì", (State.CurrentPage2ResistorsSet + 4), *(&State.R1 + 3 + State.CurrentPage2ResistorsSet));
+				if(State.ResistorsCount > 4)
+					disp1color_printf(PAGE2_RESISTORS_LEFT, PAGE2_RESISTORS_TOP + 4*PAGE2_RESISTORS_VERTICAL_STEP, FONTID_6X8M, "R%d: %g Îì", (State.CurrentPage2ResistorsSet + 5) , *(&State.R1 + 4 + State.CurrentPage2ResistorsSet));
+
+				if(State.ChosenPage2Resistor > 4)
+					State.ChosenPage2Resistor = 4;
+				
+				//Draw choose rectangle
+				disp1color_DrawRectangle(PAGE2_RESISTORS_LEFT - PAGE2_RESISTORS_LEFT_RECTANGLES_OFFSET, 
+										 PAGE2_RESISTORS_TOP + 2 + State.ChosenPage2Resistor*PAGE2_RESISTORS_VERTICAL_STEP, 
+										 PAGE2_RESISTORS_LEFT - PAGE2_RESISTORS_LEFT_RECTANGLES_OFFSET + 4, 
+										 PAGE2_RESISTORS_TOP + 4 + State.ChosenPage2Resistor*PAGE2_RESISTORS_VERTICAL_STEP);
+				
+				//Draw top triangle
+				if((State.ChosenPage2Resistor > 0) || (State.CurrentPage2ResistorsSet > 0))
+					disp1color_printf(PAGE2_RESISTORS_LEFT - PAGE2_RESISTORS_LEFT_TRIANGLES_OFFSET, PAGE2_RESISTORS_TOP, FONTID_6X8M, "%c", 0x83);
+				
+				//Draw bottom triangle
+				if((((State.ChosenPage2Resistor < 4) || (State.CurrentPage2ResistorsSet < 4)) && (State.ResistorsCount == 9)) || ((State.ChosenPage2Resistor < 3) && (State.ResistorsCount == 4)))
+					disp1color_printf(PAGE2_RESISTORS_LEFT - PAGE2_RESISTORS_LEFT_TRIANGLES_OFFSET, PAGE2_RESISTORS_TOP + 4*PAGE2_RESISTORS_VERTICAL_STEP, FONTID_6X8M, "%c", 0x84);
+				
 				break;
 			case 2 :
 				DisplayHead(1);
 
-				disp1color_printf(0, 12, FONTID_6X8M,  "                        Ìåðà ¹1\n\r Êëàññ òî÷íîñòè: 0.0005");
-				disp1color_DrawLine(2, 30, 124, 30);
-				disp1color_printf(0, 38, FONTID_6X8M, " Rä: 0.001044 Îì     Ââîä");
-				disp1color_DrawLine(2, 54, 124, 54);
-				disp1color_printf(0, 57, FONTID_6X8M,  " Rí: 0.01 Îì    Pí: 0.05 Âò");
+				disp1color_printf(3, 15, FONTID_6X8M, "Íàñòðîéêè:");
+				disp1color_printf(10, 26, FONTID_6X8M, "ßðêîñòü:  %d%%", State.Brigtness);
+				disp1color_printf(10, 37, FONTID_6X8M, "Ïàðîëü:     ********", State.Brigtness);
 				break;
-			case 3 :
+			case 4 :
+				switch(State.ChosenPage2Resistor + State.CurrentPage2ResistorsSet)
+				{
+					case 0:
+						DisplayResistorInfoPage(State.R1Nom, State.R1, State.P1, State.R1AccuracyClass, State.R1Cat);
+						break;
+					case 1:
+						DisplayResistorInfoPage(State.R2Nom, State.R2, State.P2, State.R2AccuracyClass, State.R2Cat);
+						break;
+					case 2:
+						DisplayResistorInfoPage(State.R3Nom, State.R3, State.P3, State.R3AccuracyClass, State.R3Cat);
+						break;
+					case 3:
+						DisplayResistorInfoPage(State.R4Nom, State.R4, State.P4, State.R4AccuracyClass, State.R4Cat);
+						break;
+					case 4:
+						DisplayResistorInfoPage(State.R5Nom, State.R5, State.P5, State.R5AccuracyClass, State.R5Cat);
+						break;
+					case 5:
+						DisplayResistorInfoPage(State.R6Nom, State.R6, State.P6, State.R6AccuracyClass, State.R6Cat);
+						break;
+					case 6:
+						DisplayResistorInfoPage(State.R7Nom, State.R7, State.P7, State.R7AccuracyClass, State.R7Cat);
+						break;
+					case 7:
+						DisplayResistorInfoPage(State.R8Nom, State.R8, State.P8, State.R8AccuracyClass, State.R8Cat);
+						break;
+					case 8:
+						DisplayResistorInfoPage(State.R9Nom, State.R9, State.P9, State.R9AccuracyClass, State.R9Cat);
+						break;
+					default:
+						break;
+				}
+				break;
+			case 5 :
 
 				break;
 			default:
 				break;
 		}
-
-		Mode_Rectangle = !Mode_Rectangle;
 		disp1color_UpdateFromBuff();
 	}
-
+	//------------------------------------------------------------------------------------------
 	void DisplayHead(uint8_t HeadType)
 	{
 		switch(HeadType)
@@ -819,10 +828,172 @@ int main()
 				break;
 		}
 
-		if(Mode_Rectangle)
+		if(State.ModeRectangle)
 			disp1color_DrawRectangle(MODE_RECT_L - 1, MODE_RECT_T - 1, MODE_RECT_L + 3, MODE_RECT_T + 3);	
 		else
 			disp1color_DrawRectangle(MODE_RECT_L, MODE_RECT_T, MODE_RECT_L + 2, MODE_RECT_T + 2);
 		disp1color_DrawLine(0, 10, 127, 10);	
 	}
+	//------------------------------------------------------------------------------------------
+	void HandButtonsClicks(void)
+	{
+		if((State.LeftBtnFlag && !State.LeftBtn) || (State.RightBtnFlag && !State.RightBtn) || 
+		   (State.UpBtnFlag && !State.UpBtn) || (State.DownBtnFlag && !State.DownBtn) ||
+		   (State.EnterBtnFlag && !State.EnterBtn) || (State.ClearBtnFlag && !State.ClearBtn))
+		{
+			Timer2Enable();
+		}
 
+		if(State.LeftBtn)
+		{
+			++bt1;
+			if((State.CurrentPageNumber > 0) && (State.CurrentPageNumber < 3))
+			{
+				if(!State.EditingMode)
+					--State.CurrentPageNumber;
+			}
+			else if(State.CurrentPageNumber == 4)
+			{
+				if(!State.EditingMode)
+					State.CurrentPageNumber = 1;
+			}
+		}
+			
+		if(State.RightBtn)
+		{
+			++bt2;
+			if(!State.EditingMode)
+				if(State.CurrentPageNumber < 2)
+					++State.CurrentPageNumber;
+
+			if((State.CurrentPageNumber == 4))
+			{
+				if(!State.EditingMode)
+					State.CurrentPageNumber = 2;
+			}
+		}
+
+		if(State.UpBtn)
+		{
+			++bt3;
+			if(State.CurrentPageNumber == 0)
+			{
+				if(State.CurrentPage1BottomResistor > 0)
+				{
+					--State.CurrentPage1BottomResistor;	
+				}	
+			}
+			else if(State.CurrentPageNumber == 1)
+			{
+				if(State.ChosenPage2Resistor > 0)
+					--State.ChosenPage2Resistor;
+				else if((State.ResistorsCount == 9) && (State.CurrentPage2ResistorsSet > 0))
+				{
+					--State.CurrentPage2ResistorsSet;
+				}
+			}
+			else if(State.CurrentPageNumber == 4)
+			{
+				if(!State.EditingMode)
+				{
+					if(State.CurrentPage4EditingValue > 0)	
+					{
+						--State.CurrentPage4EditingValue;	
+					}
+				}
+			}
+		}
+			
+		if(State.DownBtn)
+		{
+			++bt4;
+			if(State.CurrentPageNumber == 0)
+			{
+				if(State.CurrentPage1BottomResistor < 8)
+				{
+					++State.CurrentPage1BottomResistor;	
+				}		
+			}
+			else if(State.CurrentPageNumber == 1)
+			{
+				if(((State.ChosenPage2Resistor < 4) && (State.ResistorsCount == 9)) || ((State.ChosenPage2Resistor < 3) && (State.ResistorsCount == 4)))
+					++State.ChosenPage2Resistor;	
+				else if((State.ResistorsCount == 9) && (State.CurrentPage2ResistorsSet < 4))
+				{
+					++State.CurrentPage2ResistorsSet;
+				}	
+			}
+			else if(State.CurrentPageNumber == 4)
+			{
+				if(!State.EditingMode)
+				{
+					if(State.CurrentPage4EditingValue < (PAGE4_VALUES_COUNT- 1))	
+					{
+						++State.CurrentPage4EditingValue;	
+					}
+				}
+			}
+		}
+		if(State.EnterBtn)
+		{
+			++bt5;
+			if(State.CurrentPageNumber == 1)
+			{
+				State.CurrentPageNumber = 4;
+			}
+		}
+			
+		if(State.ClearBtn)
+		{
+			++bt6;
+
+			if((State.CurrentPageNumber == 4) && (!State.EditingMode))
+			{
+				State.CurrentPageNumber = 1;
+			}
+
+		}
+			
+
+		//Reset buttons state
+		State.LeftBtn = false;
+		State.RightBtn = false;
+		State.UpBtn = false;
+		State.DownBtn = false;
+		State.EnterBtn = false;
+		State.ClearBtn = false;
+		
+		if(!State.LeftBtnFlag && !State.RightBtnFlag && !State.UpBtnFlag && !State.DownBtnFlag && !State.EnterBtnFlag && !State.ClearBtnFlag)
+		{
+			Timer2Disable(); 
+		}	
+	}
+	//------------------------------------------------------------------------------------------
+	void DisplayResistorInfoPage(float RNom, float R, float P, float RAC, const char *RCat)
+	{
+		DisplayHead(1);
+
+		disp1color_printf(PAGE4_VALUES_LEFT, PAGE4_VALUES_TOP, FONTID_6X8M,  " Ríîì:  %g Îì", RNom);
+		disp1color_printf(PAGE4_VALUES_LEFT, PAGE4_VALUES_TOP + PAGE4_VALUES_VERTICAL_STEP, FONTID_6X8M,  " Rä:        %g Îì", R);
+		disp1color_printf(PAGE4_VALUES_LEFT, PAGE4_VALUES_TOP + 2*PAGE4_VALUES_VERTICAL_STEP, FONTID_6X8M,  " Píîì:  %g Âò", P);
+		disp1color_printf(PAGE4_VALUES_LEFT, PAGE4_VALUES_TOP + 3*PAGE4_VALUES_VERTICAL_STEP, FONTID_6X8M,  " ê.ò.:  %g", RAC);
+		disp1color_printf(PAGE4_VALUES_LEFT, PAGE4_VALUES_TOP + 4*PAGE4_VALUES_VERTICAL_STEP, FONTID_6X8M,  " Ðàçðÿä: %s", RCat);
+		
+		//Draw choose rectangle
+		disp1color_DrawRectangle(PAGE4_VALUES_LEFT - PAGE4_VALUES_LEFT_RECTANGLES_OFFSET, 
+								 PAGE4_VALUES_TOP + 2 + State.CurrentPage4EditingValue*PAGE4_VALUES_VERTICAL_STEP, 
+								 PAGE4_VALUES_LEFT - PAGE4_VALUES_LEFT_RECTANGLES_OFFSET + 4, 
+								 PAGE4_VALUES_TOP + 4 + State.CurrentPage4EditingValue*PAGE4_VALUES_VERTICAL_STEP);
+
+		//Draw top triangle
+		if(State.CurrentPage4EditingValue > 0)
+			disp1color_printf(PAGE4_VALUES_LEFT - PAGE4_VALUES_LEFT_TRIANGLES_OFFSET, PAGE4_VALUES_TOP, FONTID_6X8M, "%c", 0x83);
+				
+		//Draw bottom triangle
+		if(State.CurrentPage4EditingValue < (PAGE4_VALUES_COUNT - 1))
+			disp1color_printf(PAGE4_VALUES_LEFT - PAGE4_VALUES_LEFT_TRIANGLES_OFFSET, PAGE4_VALUES_TOP + 4*PAGE4_VALUES_VERTICAL_STEP, FONTID_6X8M, "%c", 0x84);
+		
+		
+		//disp1color_printf(100, 54, FONTID_6X8M, "Ââîä");
+		//disp1color_DrawRectangle(97, 51, 125, 63);
+	}

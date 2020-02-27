@@ -4,6 +4,12 @@
         "state.h": "c",
         "stm32f10x.h": "c",
         "disp1color.h": "c",
-        "stdbool.h": "c"
+        "stdbool.h": "c",
+        "ratio": "c",
+        "*.ipp": "c",
+        "iosfwd": "c",
+        "regex": "c",
+        "xlocale": "c",
+        "xstring": "c"
     }
 }
