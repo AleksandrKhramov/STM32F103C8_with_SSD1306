@@ -5,7 +5,6 @@
 #include <stdlib.h>
 #include <stdarg.h>
 #include <string.h>
-
 #include <ssd1306.h>
 
 uint8_t disp1color_buff[(DISP1COLOR_Width * DISP1COLOR_Height) / 8];

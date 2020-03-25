@@ -7,12 +7,13 @@
 #include "disp1color.h"
 #include "font.h"
 #include "state.h"
-                                    
+#include <stdio.h>                    
 
 #define MODE_RECT_L                             3
 #define MODE_RECT_T                             3
 
-#define BUTTON_ITERATION_COUNT                  160
+#define BUTTON_ITERATION_COUNT                  3
+#define BUTTON_ITERATION_DOWN_COUNT             50
 
 //Page1
 #define PAGE1_BOTTOM_WRITTING_LEFT              30
@@ -44,6 +45,10 @@
 #define Timer3Disable();                        TIM3->CR1 &= ~TIM_CR1_CEN;
 #define IsTimer3Enabled()                       (TIM3->CR1 & TIM_CR1_CEN)
 
+#define Timer4Enable();                         TIM4->CR1 |= TIM_CR1_CEN;
+#define Timer4Disable();                        TIM4->CR1 &= ~TIM_CR1_CEN;
+#define IsTimer4Enabled()                       (TIM4->CR1 & TIM_CR1_CEN)
+
 //Modbus Handle errors
 #define COUNT_LESS_THAN_MINIMUM                 1
 #define CRC_ERROR                               2
@@ -52,11 +57,22 @@
 #define READ_MODBUS_FUNCTION                    0x03
 #define WRITE_MODBUS_FUNCTION                   0x06    
 
-//Modbus First Registers 
-#define GENERAL_PURPOSE_BEGIN_REGISTER          0x00
-#define GENERAL_PURPOSE_END_REGISTER            0x00
+//Modbus first Registers 
+#define GENERAL_PURPOSE_BEGIN_REGISTER          0x01
+#define GENERAL_PURPOSE_END_REGISTER            0x01
 #define RESISTORS_DESCRIPTION_BEGIN_REGISTER    0x10
 #define RESISTORS_DESCRIPTION_END_REGISTER      0x18
+
+//Modbus second Registers 
+#define NOMINAL_VALUE_REGISTER                  0x00      
+#define REAL_VALUE_REGISTER                     0x01
+#define POWER_REGISTER                          0x02
+#define ACCURACY_CLASS_REGISTER                 0x03
+#define CATEGORY_REGISTER                       0x04
+
+//MODBUS Data ID 
+#define FLOAT_ID                                0x00
+#define STRING_ID                               0x01
 
 //Initialization functions
 void GPIO_Init(void);
@@ -68,6 +84,7 @@ void TIM1_Init(void);
 void TIM2_Init(void);
 void TIM3_Init(void);
 void TIM4_Init(void);
+void IWDG_Init(uint16_t tw);
 
 //Interconnection functions
 void SPI1_Write(uint8_t *pBuff, uint16_t BuffLen);

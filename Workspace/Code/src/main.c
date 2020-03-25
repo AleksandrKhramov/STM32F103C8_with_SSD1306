@@ -1,6 +1,6 @@
 #include "main.h"
 
-/*		 debug 		*/
+/*		 debug 		
 
 	uint32_t bt1 = 0;
 	uint32_t bt2 = 0;
@@ -9,7 +9,7 @@
 	uint32_t bt5 = 0;
 	uint32_t bt6 = 0;
 
-
+*/
 extern struct StateType State;
 
 int main()
@@ -22,11 +22,12 @@ int main()
 	//TIM1_Init();`
 	TIM2_Init();
 	TIM3_Init();
-	//TIM4_Init();
+	TIM4_Init();
+	IWDG_Init(1200);
 
 	ResetState();
 	SSD1306_Init();
-	
+
 	while(1)
 	{
 		__disable_irq();
@@ -36,6 +37,7 @@ int main()
 		delay_ms(100);
 	}
 }
+
 //**************************  Initialization functions  ***********************************
 	void RCC_Init(void)
 	{
@@ -124,12 +126,12 @@ int main()
 		//Green LED init
 		GPIOC->CRH &= ~GPIO_CRH_CNF13;				
 		GPIOC->CRH |= GPIO_CRH_MODE13_0;			
-
+		
 		//******************************
 		//** Setting GPIO for buttons **
 		//******************************
 
-		//Left button
+	   //Left button
 		GPIOA->CRH &= ~GPIO_CRH_CNF8;					//Reset CNF register		
 		GPIOA->CRH &= ~GPIO_CRH_MODE8;					//Input mode
 		GPIOA->CRH |= GPIO_CRH_CNF8_1;					//Input with pull up/pull down
@@ -143,7 +145,7 @@ int main()
 		EXTI->PR |= EXTI_PR_PR8;						//Clear interrupt flag
 		EXTI->IMR |= EXTI_IMR_MR8;						//Enable interrupt
 
-		//Right button
+	   //Right button
 		GPIOA->CRH &= ~GPIO_CRH_CNF9;					//Reset CNF register				
 		GPIOA->CRH &= ~GPIO_CRH_MODE9;					//Input mode
 		GPIOA->CRH |= GPIO_CRH_CNF9_1;					//Input with pull up/pull down
@@ -157,7 +159,7 @@ int main()
 		EXTI->PR |= EXTI_PR_PR9;						//Clear interrupt flag
 		EXTI->IMR |= EXTI_IMR_MR9;						//Enable interrupt
 
-		//Up button
+	   //Up button
 		GPIOA->CRH &= ~GPIO_CRH_CNF10;					//Reset CNF register				
 		GPIOA->CRH &= ~GPIO_CRH_MODE10;					//Input mode
 		GPIOA->CRH |= GPIO_CRH_CNF10_1;					//Input with pull up/pull down
@@ -171,7 +173,7 @@ int main()
 		EXTI->PR |= EXTI_PR_PR10;						//Clear interrupt flag
 		EXTI->IMR |= EXTI_IMR_MR10;						//Enable interrupt
 
-		//Down button
+	   //Down button
 		GPIOA->CRH &= ~GPIO_CRH_CNF11;					//Reset CNF register				
 		GPIOA->CRH &= ~GPIO_CRH_MODE11;					//Input mode
 		GPIOA->CRH |= GPIO_CRH_CNF11_1;					//Input with pull up/pull down
@@ -185,7 +187,7 @@ int main()
 		EXTI->PR |= EXTI_PR_PR11;						//Clear interrupt flag
 		EXTI->IMR |= EXTI_IMR_MR11;						//Enable interrupt
 
-		//Enter button
+	   //Enter button
 		GPIOB->CRL &= ~GPIO_CRL_CNF6;					//Reset CNF register				
 		GPIOB->CRL &= ~GPIO_CRL_MODE6;					//Input mode
 		GPIOB->CRL |= GPIO_CRL_CNF6_1;					//Input with pull up/pull down
@@ -200,7 +202,7 @@ int main()
 		EXTI->PR |= EXTI_PR_PR6;						//Clear interrupt flag
 		EXTI->IMR |= EXTI_IMR_MR6;						//Enable interrupt
 
-		//Clear button
+	   //Clear button
 		GPIOB->CRL &= ~GPIO_CRL_CNF7;					//Reset CNF register				
 		GPIOB->CRL &= ~GPIO_CRL_MODE7;					//Input mode
 		GPIOB->CRL |= GPIO_CRL_CNF7_1;					//Input with pull up/pull down
@@ -371,7 +373,7 @@ int main()
 		TIM2->PSC = 7199; 										// 10000 tick/sec 	
 		TIM2->ARR = 100;  										// 
 		TIM2->DIER |= TIM_DIER_UIE; 							// Enable tim2 interrupt
-		Timer3Disable();  			 							// Stop count
+		Timer2Disable();  			 							// Stop count
 
 		NVIC_EnableIRQ(TIM2_IRQn); 		 						// Enable IRQ
 	}
@@ -382,7 +384,7 @@ int main()
 
 		TIM3->PSC = 7199; 										// 10000 tick/sec 	
 		TIM3->ARR = 10000;  										// 
-		TIM3->DIER |= TIM_DIER_UIE; 							// Enable tim2 interrupt
+		TIM3->DIER |= TIM_DIER_UIE; 							// Enable tim3 interrupt
 		NVIC_EnableIRQ(TIM3_IRQn); 		 						// Enable IRQ
 		Timer3Enable(); 
 	}
@@ -392,9 +394,9 @@ int main()
 		RCC->APB1ENR |= RCC_APB1ENR_TIM4EN;  					// Enable TIM2 Periph clock
 
 		TIM4->PSC = 7199; 										// 10000 tick/sec 	
-		TIM4->ARR = 10000;  									// 
-		TIM4->DIER |= TIM_DIER_UIE; 							// Enable tim2 interrupt
-		TIM4->CR1 |= TIM_CR1_CEN;  			 					// Start count
+		TIM4->ARR = 100;  									// 
+		TIM4->DIER |= TIM_DIER_UIE; 							// Enable tim4 interrupt
+		Timer4Disable();  
 
 		NVIC_EnableIRQ(TIM4_IRQn); 		 						// Enable IRQ
 	}
@@ -425,9 +427,18 @@ int main()
 		GPIOA->CRL |= GPIO_CRL_MODE2_0;
 		//----------------------------
 	}
-//------------------------------------------------------------------------------------------
+	//-----------------------------------------------------------------------------------------
+	void IWDG_Init(uint16_t tw)
+	{
+		// Для IWDG_PR=7 Tmin=6,4мс RLR=Tмс*40/256
+		IWDG->KR=0x5555; // Ключ для доступа к таймеру
+		IWDG->PR=7; // Обновление IWDG_PR
+		IWDG->RLR=tw*40/256; // Загрузить регистр перезагрузки
+		IWDG->KR=0xAAAA; // Перезагрузка
+		IWDG->KR=0xCCCC; // Пуск таймера
+	}
 //**************************** Interconnection functions **********************************
-//-----------------------------------------------------------------------------------------
+	//-----------------------------------------------------------------------------------------
 	void SPI1_Write(uint8_t *pBuff, uint16_t BuffLen)
 	{
 		for(uint16_t i = 0; i < BuffLen; ++i)
@@ -440,47 +451,77 @@ int main()
 			DelayMicro(7);
 		}	
 	}
-//------------------------------------------------------------------------------------------
-	void MakeMODBUSMessage(uint8_t Function, uint8_t *Buffer, uint8_t Count)
+	//------------------------------------------------------------------------------------------
+	void SPI2_Write(uint8_t *pBuff, uint16_t BuffLen)
 	{
-
+		for(uint16_t i = 0; i < BuffLen; ++i)
+		{
+			//Expect while buffer ready
+			while(!(SPI2->SR & SPI_SR_TXE)) ;	
+			//Send data
+			SPI2->DR = pBuff[i];
+			//Delay caused display MCU handing ability
+			DelayMicro(7);
+		}	
 	}
-//------------------------------------------------------------------------------------------
-	void SendMODBUSMessage()
-	{
-
-	}
-//------------------------------------------------------------------------------------------
+	//------------------------------------------------------------------------------------------
 	uint16_t MakeCRC16(uint8_t* Buffer, uint16_t Count)
 	{
-		uint16_t CRC = 0xFFFF;
+		uint16_t crc = 0xFFFF;
 		uint8_t t;
 
 		for (uint16_t ByteNumber = 0; ByteNumber < Count; ++ByteNumber)
 		{
 			t = Buffer[ByteNumber];
-			CRC ^= t;          // XOR byte into least sig. byte of crc
+			crc ^= t;          // XOR byte into least sig. byte of crc
 
 			for (int i = 0; i < 8; ++i) {    // Loop over each bit
-				if ((CRC & 0x0001) == 1){
-					CRC >>= 1;
-					CRC ^= 0xA001;
+				if ((crc & 0x0001) == 1){
+					crc >>= 1;
+					crc ^= 0xA001;
 				}
 				else
-					CRC >>= 1;
+					crc >>= 1;
 			}
 		}
-		return CRC;
+		return crc;
 	}
-//------------------------------------------------------------------------------------------
+	//------------------------------------------------------------------------------------------
+	void SendMODBUSMessage(uint8_t Function, uint8_t FirstRegister, uint8_t SecondRegister, uint8_t DataID, void* Data)
+	{
+		static uint8_t SendBuffer[100] = {0};
+		static uint16_t SendBufferSize;
+
+		SendBuffer[0] = Function;
+		SendBuffer[1] = FirstRegister;
+		SendBuffer[2] = SecondRegister;
+		SendBuffer[3] = Function;
+
+		SendBufferSize = 4;
+
+		switch(DataID)
+		{
+			case FLOAT_ID :
+				SendBufferSize += sprintf((char*)(SendBuffer + SendBufferSize), "%f.5", *((float*)Data));
+				break;
+			case STRING_ID :
+				SendBufferSize += sprintf((char*)(SendBuffer + SendBufferSize), "%s", *((const char **)Data));
+				break;
+			default:
+				break;
+		}
+
+		//
+	}
+	//------------------------------------------------------------------------------------------
 	uint8_t HandleMODBUSRequest(uint8_t *Buffer, uint8_t Count)
 	{
 		if(Count < 5)
 			return COUNT_LESS_THAN_MINIMUM;
 
-		uint16_t CRC = MakeCRC16(Buffer, Count - 2);
+		uint16_t crc = MakeCRC16(Buffer, Count - 2);
 
-		if(((CRC >> 8) != Buffer[Count - 2]) || ((CRC & 0x00FF) != Buffer[Count - 1]))
+		if(((crc >> 8) != Buffer[Count - 2]) || ((crc & 0x00FF) != Buffer[Count - 1]))
 			return CRC_ERROR;
 
 		switch(Buffer[0])
@@ -489,7 +530,36 @@ int main()
 				if(((Buffer[1] >= GENERAL_PURPOSE_BEGIN_REGISTER) && (Buffer[1] <= GENERAL_PURPOSE_END_REGISTER)) || 
 				   ((Buffer[1] >= RESISTORS_DESCRIPTION_BEGIN_REGISTER) && (Buffer[1] <= (RESISTORS_DESCRIPTION_BEGIN_REGISTER + State.ResistorsCount - 1))))
 				{
-					
+					if(Buffer[1] == GENERAL_PURPOSE_BEGIN_REGISTER)
+					{
+						//+++++++++++++++++ Handle General Purpose Registers ++++++++++++++++++	
+					}
+					else if((Buffer[1] >= RESISTORS_DESCRIPTION_BEGIN_REGISTER) && (Buffer[1] <= (RESISTORS_DESCRIPTION_BEGIN_REGISTER + State.ResistorsCount - 1)))
+					{
+						switch(Buffer[2])
+						{
+							case NOMINAL_VALUE_REGISTER : 
+								SendMODBUSMessage(READ_MODBUS_FUNCTION, Buffer[1], Buffer[2], FLOAT_ID, (&State.R1Nom + Buffer[1] - RESISTORS_DESCRIPTION_BEGIN_REGISTER));
+							case REAL_VALUE_REGISTER : 
+								SendMODBUSMessage(READ_MODBUS_FUNCTION, Buffer[1], Buffer[2], FLOAT_ID, (&State.R1 + Buffer[1] - RESISTORS_DESCRIPTION_BEGIN_REGISTER));
+								break;
+							case POWER_REGISTER : 
+								SendMODBUSMessage(READ_MODBUS_FUNCTION, Buffer[1], Buffer[2], FLOAT_ID, (&State.P1 + Buffer[1] - RESISTORS_DESCRIPTION_BEGIN_REGISTER));
+								break;
+							case ACCURACY_CLASS_REGISTER : 
+								SendMODBUSMessage(READ_MODBUS_FUNCTION, Buffer[1], Buffer[2], FLOAT_ID, (&State.R1AccuracyClass + Buffer[1] - RESISTORS_DESCRIPTION_BEGIN_REGISTER));
+								break;
+							case CATEGORY_REGISTER : 
+								SendMODBUSMessage(READ_MODBUS_FUNCTION, Buffer[1], Buffer[2], STRING_ID, (&State.R1Cat + Buffer[1] - RESISTORS_DESCRIPTION_BEGIN_REGISTER));
+								break;
+							default:
+								break;
+						}
+					}
+					else
+					{
+						//+++++++++++++++++ Handle Register Error ++++++++++++++++++
+					}
 				}
 				else
 				{
@@ -500,7 +570,18 @@ int main()
 				if(((Buffer[1] >= GENERAL_PURPOSE_BEGIN_REGISTER) && (Buffer[1] <= GENERAL_PURPOSE_END_REGISTER)) || 
 				   ((Buffer[1] >= RESISTORS_DESCRIPTION_BEGIN_REGISTER) && (Buffer[1] <= (RESISTORS_DESCRIPTION_BEGIN_REGISTER + State.ResistorsCount - 1))))
 				{
-					
+					if(Buffer[1] == GENERAL_PURPOSE_BEGIN_REGISTER)
+					{
+
+					}
+					else if((Buffer[1] >= RESISTORS_DESCRIPTION_BEGIN_REGISTER) && (Buffer[1] <= (RESISTORS_DESCRIPTION_BEGIN_REGISTER + State.ResistorsCount - 1)))
+					{
+						
+					}
+					else
+					{
+						//+++++++++++++++++ Handle Register Error ++++++++++++++++++
+					}	
 				}
 				else
 				{
@@ -511,33 +592,35 @@ int main()
 				//Buffer[0]
 				break;
 		} 
-	}
-//------------------------------------------------------------------------------------------
 
-//------------------------------------------------------------------------------------------
+		return 0;
+	}
+	//------------------------------------------------------------------------------------------
+	
+
 //********************************** Interrupts handlers ***********************************
-//------------------------------------------------------------------------------------------
+	//------------------------------------------------------------------------------------------
 	void EXTI9_5_IRQHandler(void)
 	{	
-		if(EXTI->PR & EXTI_PR_PR6)
+		if((EXTI->PR & EXTI_PR_PR6) && (GPIOB->IDR & GPIO_IDR_IDR6))
 		{
 			State.EnterBtnCounter = 0;
 			State.EnterBtnFlag = true;
 		}
 
-		if(EXTI->PR & EXTI_PR_PR7)
+		if((EXTI->PR & EXTI_PR_PR7) && (GPIOB->IDR & GPIO_IDR_IDR7))
 		{
 			State.ClearBtnCounter = 0;
 			State.ClearBtnFlag = true;
 		}
 
-		if(EXTI->PR & EXTI_PR_PR8)
+		if((EXTI->PR & EXTI_PR_PR8) && (GPIOA->IDR & GPIO_IDR_IDR8))
 		{
 			State.LeftBtnCounter = 0;
 			State.LeftBtnFlag = true;
 		}
 
-		if(EXTI->PR & EXTI_PR_PR9)
+		if((EXTI->PR & EXTI_PR_PR9) && (GPIOA->IDR & GPIO_IDR_IDR9))
 		{
 			State.RightBtnCounter = 0;
 			State.RightBtnFlag = true;
@@ -559,18 +642,18 @@ int main()
 	//------------------------------------------------------------------------------------------
 	void EXTI15_10_IRQHandler(void)
 	{
-		if(EXTI->PR & EXTI_PR_PR10)
+		if((EXTI->PR & EXTI_PR_PR10) && (GPIOA->IDR & GPIO_IDR_IDR10))
 		{
 			State.UpBtnCounter = 0;
 			State.UpBtnFlag = true;
 		}
 
-		if(EXTI->PR & EXTI_PR_PR11)
+		if((EXTI->PR & EXTI_PR_PR11) && (GPIOA->IDR & GPIO_IDR_IDR11))
 		{
 			State.DownBtnCounter = 0;
 			State.DownBtnFlag = true;
 		}
-
+		
 		//Reset interrupts
 		EXTI->PR |= EXTI_PR_PR10; 						
 		EXTI->PR |= EXTI_PR_PR11; 						
@@ -608,66 +691,78 @@ int main()
 		TIM2->SR &= ~TIM_SR_UIF; 
 		TIM2->CNT = 100;
 
-		if(State.LeftBtnFlag && ((++State.LeftBtnCounter) > BUTTON_ITERATION_COUNT))
+		if(State.LeftBtnDownFlag && !(GPIOA->IDR & GPIO_IDR_IDR8) && ((--State.LeftBtnCounter) <= 0))
 		{
-			if(!(GPIOA->IDR & GPIO_IDR_IDR8))
-			{
 				State.LeftBtnFlag = false;
 				State.LeftBtn = true;
-			}
-			else
+				State.LeftBtnDownFlag = false; 
 				State.LeftBtnCounter = 0;
 		}
-		else if(State.RightBtnFlag && ((++State.RightBtnCounter) > BUTTON_ITERATION_COUNT))
+		else if(State.LeftBtnDownFlag && (GPIOA->IDR & GPIO_IDR_IDR8))
 		{
-			if(!(GPIOA->IDR & GPIO_IDR_IDR9))
-			{
-				State.RightBtnFlag = false;
-				State.RightBtn = true;
-			}
-			else
-				State.RightBtnCounter = 0;
+			State.LeftBtnCounter = BUTTON_ITERATION_DOWN_COUNT;	
 		}
-		else if(State.UpBtnFlag && ((++State.UpBtnCounter) > BUTTON_ITERATION_COUNT))
+
+		if(State.RightBtnDownFlag && !(GPIOA->IDR & GPIO_IDR_IDR9) && ((--State.RightBtnCounter) <= 0))
 		{
-			if(!(GPIOA->IDR & GPIO_IDR_IDR10))
-			{
-				State.UpBtnFlag = false;
-				State.UpBtn = true;
-			}
-			else
-				State.UpBtnCounter = 0;
+			State.RightBtnFlag = false;
+			State.RightBtn = true;
+			State.RightBtnDownFlag = false; 
+			State.RightBtnCounter = 0;
 		}
-		else if(State.DownBtnFlag && ((++State.DownBtnCounter) > BUTTON_ITERATION_COUNT))
+		else if(State.RightBtnDownFlag && (GPIOA->IDR & GPIO_IDR_IDR9))
 		{
-			if(!(GPIOA->IDR & GPIO_IDR_IDR11))
-			{
-				State.DownBtnFlag = false;
-				State.DownBtn = true;
-			}
-			else
-				State.DownBtnCounter = 0;
+			State.RightBtnCounter = BUTTON_ITERATION_DOWN_COUNT;	
 		}
-		else if(State.EnterBtnFlag && ((++State.EnterBtnCounter) > BUTTON_ITERATION_COUNT))
+
+		if(State.UpBtnDownFlag && !(GPIOA->IDR & GPIO_IDR_IDR10) && ((--State.UpBtnCounter) <= 0))
 		{
-			if(!(GPIOB->IDR & GPIO_IDR_IDR6))
-			{
-				State.EnterBtnFlag = false;
-				State.EnterBtn = true;
-			}
-			else
-				State.EnterBtnCounter = 0;
+			State.UpBtnFlag = false;
+			State.UpBtn = true;
+			State.UpBtnDownFlag = false; 
+			State.UpBtnCounter = 0;
 		}
-		else if(State.ClearBtnFlag && ((++State.ClearBtnCounter) > BUTTON_ITERATION_COUNT))
+		else if(State.RightBtnDownFlag && (GPIOA->IDR & GPIO_IDR_IDR10))
 		{
-			if(!(GPIOB->IDR & GPIO_IDR_IDR7))
-			{
-				State.ClearBtnFlag = false;
-				State.ClearBtn = true;
-			}
-			else
-				State.ClearBtnCounter = 0;
+			State.UpBtnCounter = BUTTON_ITERATION_DOWN_COUNT;		
 		}
+
+		if(State.DownBtnDownFlag && !(GPIOA->IDR & GPIO_IDR_IDR11) && ((--State.DownBtnCounter) <= 0))
+		{
+			State.DownBtnFlag = false;
+			State.DownBtn = true;
+			State.DownBtnDownFlag = false; 
+			State.DownBtnCounter = 0;
+		}
+		else if(State.DownBtnDownFlag && (GPIOA->IDR & GPIO_IDR_IDR11))
+		{
+			State.DownBtnCounter = BUTTON_ITERATION_DOWN_COUNT;		
+		}
+
+		if(State.EnterBtnDownFlag && !(GPIOB->IDR & GPIO_IDR_IDR6) && ((--State.EnterBtnCounter) <= 0))
+		{
+			State.EnterBtnFlag = false;
+			State.EnterBtn = true;
+			State.EnterBtnDownFlag = false; 
+			State.EnterBtnCounter = 0;
+		}
+		else if(State.EnterBtnDownFlag && (GPIOB->IDR & GPIO_IDR_IDR6))
+		{
+			State.EnterBtnCounter = BUTTON_ITERATION_DOWN_COUNT;		
+		}
+
+		if(State.ClearBtnDownFlag && !(GPIOB->IDR & GPIO_IDR_IDR7) && ((--State.ClearBtnCounter) <= 0))
+		{
+			State.ClearBtnFlag = false;
+			State.ClearBtn = true;
+			State.ClearBtnDownFlag = false;
+			State.ClearBtnCounter = 0;
+		}
+		else if(State.ClearBtnDownFlag && (GPIOB->IDR & GPIO_IDR_IDR7))
+		{
+			State.ClearBtnCounter = BUTTON_ITERATION_DOWN_COUNT;		
+		}
+		
 	}
 	//------------------------------------------------------------------------------------------
 	void TIM3_IRQHandler(void)
@@ -675,15 +770,97 @@ int main()
 		TIM3->SR &= ~TIM_SR_UIF; 
 
 		State.ModeRectangle = !State.ModeRectangle;
+
+		//Перезагрузка сторожевого таймера IWDG
+		IWDG->KR=0xAAAA; // Перезагрузка
 	}
 	//------------------------------------------------------------------------------------------
 	void TIM4_IRQHandler(void)
 	{
 		TIM4->SR &= ~TIM_SR_UIF; 
+		TIM4->CNT = 100;
+
+		if(State.LeftBtnFlag && (GPIOA->IDR & GPIO_IDR_IDR8) && ((++State.LeftBtnCounter) > BUTTON_ITERATION_COUNT))
+		{
+			State.LeftBtnDownFlag = true;
+			State.LeftBtnFlag = false;
+			State.LeftBtnCounter = BUTTON_ITERATION_DOWN_COUNT;
+		}
+		else if(State.LeftBtnFlag && !(GPIOA->IDR & GPIO_IDR_IDR8))
+		{
+			State.LeftBtnFlag = false;	
+			State.LeftBtnCounter = 0;
+			State.LeftBtnDownFlag = false;
+		}
+
+		if(State.RightBtnFlag && (GPIOA->IDR & GPIO_IDR_IDR9) && ((++State.RightBtnCounter) > BUTTON_ITERATION_COUNT))
+		{
+			State.RightBtnDownFlag = true;
+			State.RightBtnFlag = false;
+			State.RightBtnCounter = BUTTON_ITERATION_DOWN_COUNT;
+		}
+		else if(State.RightBtnFlag && !(GPIOA->IDR & GPIO_IDR_IDR9))
+		{
+			State.RightBtnFlag = false;	
+			State.RightBtnCounter = 0;
+			State.RightBtnDownFlag = false;
+		}
+
+		if(State.UpBtnFlag && (GPIOA->IDR & GPIO_IDR_IDR10) && ((++State.UpBtnCounter) > BUTTON_ITERATION_COUNT))
+		{
+			State.UpBtnDownFlag = true;
+			State.UpBtnFlag = false;
+			State.RightBtnCounter = BUTTON_ITERATION_DOWN_COUNT;
+		}
+		else if(State.UpBtnFlag && !(GPIOA->IDR & GPIO_IDR_IDR10))
+		{
+			State.UpBtnFlag = false;	
+			State.UpBtnCounter = 0;
+			State.UpBtnDownFlag = false;
+		}
+
+		if(State.DownBtnFlag && (GPIOA->IDR & GPIO_IDR_IDR11) && ((++State.DownBtnCounter) > BUTTON_ITERATION_COUNT))
+		{
+			State.DownBtnDownFlag = true;
+			State.DownBtnFlag = false;
+			State.RightBtnCounter = BUTTON_ITERATION_DOWN_COUNT;
+		}
+		else if(State.DownBtnFlag && !(GPIOA->IDR & GPIO_IDR_IDR11))
+		{
+			State.DownBtnFlag = false;	
+			State.DownBtnCounter = 0;
+			State.DownBtnDownFlag = false;
+		}
+
+		if(State.EnterBtnFlag && (GPIOB->IDR & GPIO_IDR_IDR6) && ((++State.EnterBtnCounter) > BUTTON_ITERATION_COUNT))
+		{
+			State.EnterBtnDownFlag = true;
+			State.EnterBtnFlag = false;
+			State.RightBtnCounter = BUTTON_ITERATION_DOWN_COUNT;
+		}
+		else if(State.EnterBtnFlag && !(GPIOB->IDR & GPIO_IDR_IDR6))
+		{
+			State.EnterBtnFlag = false;	
+			State.EnterBtnCounter = 0;
+			State.EnterBtnDownFlag = false;
+		}
+
+		if(State.ClearBtnFlag && (GPIOB->IDR & GPIO_IDR_IDR7) && ((++State.ClearBtnCounter) > BUTTON_ITERATION_COUNT))
+		{
+			State.ClearBtnDownFlag = true;
+			State.ClearBtnFlag = false;
+			State.RightBtnCounter = BUTTON_ITERATION_DOWN_COUNT;
+		}
+		else if(State.ClearBtnFlag && !(GPIOB->IDR & GPIO_IDR_IDR7))
+		{
+			State.ClearBtnFlag = false;	
+			State.ClearBtnCounter = 0;
+			State.ClearBtnDownFlag = false;
+		}
 	}
-//------------------------------------------------------------------------------------------
+	//------------------------------------------------------------------------------------------
 //**************************** Working functions *******************************************
-//------------------------------------------------------------------------------------------
+	//------------------------------------------------------------------------------------------
 	void DelayMicro(uint32_t time)
 	{
 		for(int i = 0; i < 6; ++i)
@@ -837,16 +1014,19 @@ int main()
 	//------------------------------------------------------------------------------------------
 	void HandButtonsClicks(void)
 	{
-		if((State.LeftBtnFlag && !State.LeftBtn) || (State.RightBtnFlag && !State.RightBtn) || 
-		   (State.UpBtnFlag && !State.UpBtn) || (State.DownBtnFlag && !State.DownBtn) ||
-		   (State.EnterBtnFlag && !State.EnterBtn) || (State.ClearBtnFlag && !State.ClearBtn))
+		if(State.LeftBtnDownFlag || State.RightBtnDownFlag || State.UpBtnDownFlag || State.DownBtnDownFlag || State.EnterBtnDownFlag || State.ClearBtnDownFlag)
 		{
 			Timer2Enable();
 		}
 
+		if(State.LeftBtnFlag || State.RightBtnFlag || State.UpBtnFlag || State.DownBtnFlag || State.EnterBtnFlag || State.ClearBtnFlag)
+		{
+			Timer4Enable();
+		}
+
 		if(State.LeftBtn)
 		{
-			++bt1;
+			//++bt1;
 			if((State.CurrentPageNumber > 0) && (State.CurrentPageNumber < 3))
 			{
 				if(!State.EditingMode)
@@ -861,12 +1041,12 @@ int main()
 			
 		if(State.RightBtn)
 		{
-			++bt2;
+			//++bt2;
 			if(!State.EditingMode)
 				if(State.CurrentPageNumber < 2)
 					++State.CurrentPageNumber;
 
-			if((State.CurrentPageNumber == 4))
+			if(State.CurrentPageNumber == 4)
 			{
 				if(!State.EditingMode)
 					State.CurrentPageNumber = 2;
@@ -875,7 +1055,7 @@ int main()
 
 		if(State.UpBtn)
 		{
-			++bt3;
+			//++bt3;
 			if(State.CurrentPageNumber == 0)
 			{
 				if(State.CurrentPage1BottomResistor > 0)
@@ -906,7 +1086,7 @@ int main()
 			
 		if(State.DownBtn)
 		{
-			++bt4;
+			//++bt4;
 			if(State.CurrentPageNumber == 0)
 			{
 				if(State.CurrentPage1BottomResistor < 8)
@@ -936,7 +1116,7 @@ int main()
 		}
 		if(State.EnterBtn)
 		{
-			++bt5;
+			//++bt5;
 			if(State.CurrentPageNumber == 1)
 			{
 				State.CurrentPageNumber = 4;
@@ -945,7 +1125,7 @@ int main()
 			
 		if(State.ClearBtn)
 		{
-			++bt6;
+			//++bt6;
 
 			if((State.CurrentPageNumber == 4) && (!State.EditingMode))
 			{
@@ -953,7 +1133,6 @@ int main()
 			}
 
 		}
-			
 
 		//Reset buttons state
 		State.LeftBtn = false;
@@ -965,8 +1144,14 @@ int main()
 		
 		if(!State.LeftBtnFlag && !State.RightBtnFlag && !State.UpBtnFlag && !State.DownBtnFlag && !State.EnterBtnFlag && !State.ClearBtnFlag)
 		{
-			Timer2Disable(); 
+			Timer4Disable();	
 		}	
+
+		if(!State.LeftBtnDownFlag && !State.RightBtnDownFlag && !State.UpBtnDownFlag && !State.DownBtnDownFlag && !State.EnterBtnDownFlag && !State.ClearBtnDownFlag)
+		{
+			Timer2Disable();  
+		}	
+
 	}
 	//------------------------------------------------------------------------------------------
 	void DisplayResistorInfoPage(float RNom, float R, float P, float RAC, const char *RCat)

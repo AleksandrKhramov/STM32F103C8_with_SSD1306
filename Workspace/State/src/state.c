@@ -26,6 +26,13 @@ void ResetState(void)
 	State.EnterBtnFlag = false;
 	State.ClearBtnFlag = false;
 
+	State.LeftBtnDownFlag = false;
+	State.RightBtnDownFlag = false;
+	State.UpBtnDownFlag = false;
+	State.DownBtnDownFlag = false;
+	State.EnterBtnDownFlag = false;
+	State.ClearBtnDownFlag = false;
+
 	State.R1Nom = 0.001;
     State.R2Nom = 0.01;
     State.R3Nom = 0.1;

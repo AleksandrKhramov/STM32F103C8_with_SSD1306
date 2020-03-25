@@ -10,6 +10,10 @@
         "iosfwd": "c",
         "regex": "c",
         "xlocale": "c",
-        "xstring": "c"
+        "xstring": "c",
+        "sstream": "c",
+        "strstream": "c",
+        "font.h": "c",
+        "ssd1306.h": "c"
     }
 }

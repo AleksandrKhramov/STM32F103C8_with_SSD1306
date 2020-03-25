@@ -30,8 +30,16 @@ struct StateType
 	bool EnterBtnFlag : 1;
 	bool ClearBtnFlag : 1;
 
+	//NVIC buttons flags
+    bool LeftBtnDownFlag : 1;
+	bool RightBtnDownFlag : 1;
+	bool UpBtnDownFlag : 1;
+	bool DownBtnDownFlag : 1;
+	bool EnterBtnDownFlag : 1;
+	bool ClearBtnDownFlag : 1;
+
     //Pages
-    uint8_t CurrentPageNumber : 3;
+    uint8_t CurrentPageNumber : 5;
 
 	bool EditingMode : 1;
 
