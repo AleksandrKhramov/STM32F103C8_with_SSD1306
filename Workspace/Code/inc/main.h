@@ -16,16 +16,22 @@
 #define BUTTON_ITERATION_DOWN_COUNT             50
 
 //Page1
+#define FIRST_PAGE                              0
 #define PAGE1_BOTTOM_WRITTING_LEFT              30
 
 //Page2
+#define SECOND_PAGE                             1
 #define PAGE2_RESISTORS_LEFT                    25
 #define PAGE2_RESISTORS_LEFT_RECTANGLES_OFFSET  10
 #define PAGE2_RESISTORS_LEFT_TRIANGLES_OFFSET   20
 #define PAGE2_RESISTORS_TOP                     13
 #define PAGE2_RESISTORS_VERTICAL_STEP           11
 
+//Page3
+#define THIRD_PAGE                              2
+
 //Page4
+#define RESISTORS_INFO_PAGE                     4
 #define PAGE4_VALUES_LEFT                       25
 #define PAGE4_VALUES_LEFT_RECTANGLES_OFFSET     10
 #define PAGE4_VALUES_TOP                        14

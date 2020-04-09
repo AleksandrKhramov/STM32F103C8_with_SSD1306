@@ -297,7 +297,6 @@ int main()
 		GPIOB->CRH &= ~GPIO_CRH_MODE14;
 		GPIOB->CRH &= ~GPIO_CRH_MODE15;
 		
-		
 		//Setting
 		//SCK
 		GPIOB->CRH |= GPIO_CRH_CNF13_1; 
@@ -324,8 +323,8 @@ int main()
 		SPI2->CR1 |= SPI_CR1_SSM;          			//Software NSS management SS
 		SPI2->CR1 |= SPI_CR1_SSI;          			//SS in high level
 	
+		SPI2->CR2 |= SPI_CR2_RXDMAEN;				//Enable DMA request
 		SPI2->CR1 |= SPI_CR1_MSTR;         			//Master mode
-		
 		SPI2->CR1 |= SPI_CR1_SPE; 					//Enable SPI	
 	}
 	//-----------------------------------------------------------------------------------------
@@ -430,12 +429,12 @@ int main()
 	//-----------------------------------------------------------------------------------------
 	void IWDG_Init(uint16_t tw)
 	{
-		// Для IWDG_PR=7 Tmin=6,4мс RLR=Tмс*40/256
-		IWDG->KR=0x5555; // Ключ для доступа к таймеру
-		IWDG->PR=7; // Обновление IWDG_PR
-		IWDG->RLR=tw*40/256; // Загрузить регистр перезагрузки
-		IWDG->KR=0xAAAA; // Перезагрузка
-		IWDG->KR=0xCCCC; // Пуск таймера
+		// пїЅпїЅпїЅ IWDG_PR=7 Tmin=6,4пїЅпїЅ RLR=TпїЅпїЅ*40/256
+		IWDG->KR=0x5555; // пїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+		IWDG->PR=7; // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ IWDG_PR
+		IWDG->RLR=tw*40/256; // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+		IWDG->KR=0xAAAA; // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+		IWDG->KR=0xCCCC; // пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 	}
 //**************************** Interconnection functions **********************************
 	//-----------------------------------------------------------------------------------------
@@ -465,6 +464,8 @@ int main()
 		}	
 	}
 	//------------------------------------------------------------------------------------------
+
+//******************************* Protocol's functions ************************************	
 	uint16_t MakeCRC16(uint8_t* Buffer, uint16_t Count)
 	{
 		uint16_t crc = 0xFFFF;
@@ -496,7 +497,7 @@ int main()
 		SendBuffer[1] = FirstRegister;
 		SendBuffer[2] = SecondRegister;
 		SendBuffer[3] = Function;
-
+		
 		SendBufferSize = 4;
 
 		switch(DataID)
@@ -540,6 +541,7 @@ int main()
 						{
 							case NOMINAL_VALUE_REGISTER : 
 								SendMODBUSMessage(READ_MODBUS_FUNCTION, Buffer[1], Buffer[2], FLOAT_ID, (&State.R1Nom + Buffer[1] - RESISTORS_DESCRIPTION_BEGIN_REGISTER));
+								break;
 							case REAL_VALUE_REGISTER : 
 								SendMODBUSMessage(READ_MODBUS_FUNCTION, Buffer[1], Buffer[2], FLOAT_ID, (&State.R1 + Buffer[1] - RESISTORS_DESCRIPTION_BEGIN_REGISTER));
 								break;
@@ -597,7 +599,7 @@ int main()
 	}
 	//------------------------------------------------------------------------------------------
 	
-
+	//------------------------------------------------------------------------------------------
 //********************************** Interrupts handlers ***********************************
 	//------------------------------------------------------------------------------------------
 	void EXTI9_5_IRQHandler(void)
@@ -771,8 +773,8 @@ int main()
 
 		State.ModeRectangle = !State.ModeRectangle;
 
-		//Перезагрузка сторожевого таймера IWDG
-		IWDG->KR=0xAAAA; // Перезагрузка
+		//пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ IWDG
+		IWDG->KR=0xAAAA; // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 	}
 	//------------------------------------------------------------------------------------------
 	void TIM4_IRQHandler(void)
@@ -884,7 +886,7 @@ int main()
 
 		switch(State.CurrentPageNumber)
 		{
-			case 0 :
+			case FIRST_PAGE :
 				DisplayHead(0);
 
 				//Draw temperature
@@ -897,20 +899,20 @@ int main()
 				disp1color_DrawLine(0, 54, 127, 54);
 
 				//Draw bottom writting with triangles
-				disp1color_printf(PAGE1_BOTTOM_WRITTING_LEFT, 57, FONTID_6X8M, "%c R%d: %g Ом", 0x82, (State.CurrentPage1BottomResistor + 1), *(&State.R1 + State.CurrentPage1BottomResistor));
+				disp1color_printf(PAGE1_BOTTOM_WRITTING_LEFT, 57, FONTID_6X8M, "%c R%d: %g пїЅпїЅ", 0x82, (State.CurrentPage1BottomResistor + 1), *(&State.R1 + State.CurrentPage1BottomResistor));
 				break;
-			case 1 :
+			case SECOND_PAGE :
 				DisplayHead(1);
 
 				if((State.ResistorsCount <= 4) && (State.CurrentPage2ResistorsSet > 0))
 					State.CurrentPage2ResistorsSet = 0;
 
-				disp1color_printf(PAGE2_RESISTORS_LEFT, PAGE2_RESISTORS_TOP, FONTID_6X8M, "R%d: %g Ом", (State.CurrentPage2ResistorsSet + 1), *(&State.R1 + State.CurrentPage2ResistorsSet));  
-				disp1color_printf(PAGE2_RESISTORS_LEFT, PAGE2_RESISTORS_TOP + 1*PAGE2_RESISTORS_VERTICAL_STEP, FONTID_6X8M, "R%d: %g Ом", (State.CurrentPage2ResistorsSet + 2), *(&State.R1 + 1 + State.CurrentPage2ResistorsSet));
-				disp1color_printf(PAGE2_RESISTORS_LEFT, PAGE2_RESISTORS_TOP + 2*PAGE2_RESISTORS_VERTICAL_STEP, FONTID_6X8M, "R%d: %g Ом", (State.CurrentPage2ResistorsSet + 3), *(&State.R1 + 2 + State.CurrentPage2ResistorsSet));
-				disp1color_printf(PAGE2_RESISTORS_LEFT, PAGE2_RESISTORS_TOP + 3*PAGE2_RESISTORS_VERTICAL_STEP, FONTID_6X8M, "R%d: %g Ом", (State.CurrentPage2ResistorsSet + 4), *(&State.R1 + 3 + State.CurrentPage2ResistorsSet));
+				disp1color_printf(PAGE2_RESISTORS_LEFT, PAGE2_RESISTORS_TOP, FONTID_6X8M, "R%d: %g пїЅпїЅ", (State.CurrentPage2ResistorsSet + 1), *(&State.R1 + State.CurrentPage2ResistorsSet));  
+				disp1color_printf(PAGE2_RESISTORS_LEFT, PAGE2_RESISTORS_TOP + 1*PAGE2_RESISTORS_VERTICAL_STEP, FONTID_6X8M, "R%d: %g пїЅпїЅ", (State.CurrentPage2ResistorsSet + 2), *(&State.R1 + 1 + State.CurrentPage2ResistorsSet));
+				disp1color_printf(PAGE2_RESISTORS_LEFT, PAGE2_RESISTORS_TOP + 2*PAGE2_RESISTORS_VERTICAL_STEP, FONTID_6X8M, "R%d: %g пїЅпїЅ", (State.CurrentPage2ResistorsSet + 3), *(&State.R1 + 2 + State.CurrentPage2ResistorsSet));
+				disp1color_printf(PAGE2_RESISTORS_LEFT, PAGE2_RESISTORS_TOP + 3*PAGE2_RESISTORS_VERTICAL_STEP, FONTID_6X8M, "R%d: %g пїЅпїЅ", (State.CurrentPage2ResistorsSet + 4), *(&State.R1 + 3 + State.CurrentPage2ResistorsSet));
 				if(State.ResistorsCount > 4)
-					disp1color_printf(PAGE2_RESISTORS_LEFT, PAGE2_RESISTORS_TOP + 4*PAGE2_RESISTORS_VERTICAL_STEP, FONTID_6X8M, "R%d: %g Ом", (State.CurrentPage2ResistorsSet + 5) , *(&State.R1 + 4 + State.CurrentPage2ResistorsSet));
+					disp1color_printf(PAGE2_RESISTORS_LEFT, PAGE2_RESISTORS_TOP + 4*PAGE2_RESISTORS_VERTICAL_STEP, FONTID_6X8M, "R%d: %g пїЅпїЅ", (State.CurrentPage2ResistorsSet + 5) , *(&State.R1 + 4 + State.CurrentPage2ResistorsSet));
 
 				if(State.ChosenPage2Resistor > 4)
 					State.ChosenPage2Resistor = 4;
@@ -930,14 +932,14 @@ int main()
 					disp1color_printf(PAGE2_RESISTORS_LEFT - PAGE2_RESISTORS_LEFT_TRIANGLES_OFFSET, PAGE2_RESISTORS_TOP + 4*PAGE2_RESISTORS_VERTICAL_STEP, FONTID_6X8M, "%c", 0x84);
 				
 				break;
-			case 2 :
+			case THIRD_PAGE :
 				DisplayHead(1);
 
-				disp1color_printf(3, 15, FONTID_6X8M, "Настройки:");
-				disp1color_printf(10, 26, FONTID_6X8M, "Яркость:  %d%%", State.Brigtness);
-				disp1color_printf(10, 37, FONTID_6X8M, "Пароль:     ********", State.Brigtness);
+				disp1color_printf(3, 15, FONTID_6X8M, "пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ:");
+				disp1color_printf(10, 26, FONTID_6X8M, "пїЅпїЅпїЅпїЅпїЅпїЅпїЅ:  %d%%", State.Brigtness);
+				disp1color_printf(10, 37, FONTID_6X8M, "пїЅпїЅпїЅпїЅпїЅпїЅ:     ********", State.Brigtness);
 				break;
-			case 4 :
+			case RESISTORS_INFO_PAGE :
 				switch(State.ChosenPage2Resistor + State.CurrentPage2ResistorsSet)
 				{
 					case 0:
@@ -987,12 +989,12 @@ int main()
 			case HEAD_WORK_MODE :
 				if(State.ReadyToWork)
 				{
-					disp1color_printf(0, 1, FONTID_6X8M,  "             Готов  к  работе\n\r");
+					disp1color_printf(0, 1, FONTID_6X8M,  "             пїЅпїЅпїЅпїЅпїЅ  пїЅ  пїЅпїЅпїЅпїЅпїЅпїЅ\n\r");
 					disp1color_printf(118, 1, FONTID_6X8M, "%c", 0x81);
 				}
 				else
 				{
-					disp1color_printf(0, 1, FONTID_6X8M,  "             Выход  на  режим\n\r");
+					disp1color_printf(0, 1, FONTID_6X8M,  "             пїЅпїЅпїЅпїЅпїЅ  пїЅпїЅ  пїЅпїЅпїЅпїЅпїЅ\n\r");
 					disp1color_printf(118, 1, FONTID_6X8M, "x");
 				}
 				break;
@@ -1151,18 +1153,17 @@ int main()
 		{
 			Timer2Disable();  
 		}	
-
 	}
 	//------------------------------------------------------------------------------------------
 	void DisplayResistorInfoPage(float RNom, float R, float P, float RAC, const char *RCat)
 	{
 		DisplayHead(1);
 
-		disp1color_printf(PAGE4_VALUES_LEFT, PAGE4_VALUES_TOP, FONTID_6X8M,  " Rном:  %g Ом", RNom);
-		disp1color_printf(PAGE4_VALUES_LEFT, PAGE4_VALUES_TOP + PAGE4_VALUES_VERTICAL_STEP, FONTID_6X8M,  " Rд:        %g Ом", R);
-		disp1color_printf(PAGE4_VALUES_LEFT, PAGE4_VALUES_TOP + 2*PAGE4_VALUES_VERTICAL_STEP, FONTID_6X8M,  " Pном:  %g Вт", P);
-		disp1color_printf(PAGE4_VALUES_LEFT, PAGE4_VALUES_TOP + 3*PAGE4_VALUES_VERTICAL_STEP, FONTID_6X8M,  " к.т.:  %g", RAC);
-		disp1color_printf(PAGE4_VALUES_LEFT, PAGE4_VALUES_TOP + 4*PAGE4_VALUES_VERTICAL_STEP, FONTID_6X8M,  " Разряд: %s", RCat);
+		disp1color_printf(PAGE4_VALUES_LEFT, PAGE4_VALUES_TOP, FONTID_6X8M,  " RпїЅпїЅпїЅ:  %g пїЅпїЅ", RNom);
+		disp1color_printf(PAGE4_VALUES_LEFT, PAGE4_VALUES_TOP + PAGE4_VALUES_VERTICAL_STEP, FONTID_6X8M,  " RпїЅ:        %g пїЅпїЅ", R);
+		disp1color_printf(PAGE4_VALUES_LEFT, PAGE4_VALUES_TOP + 2*PAGE4_VALUES_VERTICAL_STEP, FONTID_6X8M,  " PпїЅпїЅпїЅ:  %g пїЅпїЅ", P);
+		disp1color_printf(PAGE4_VALUES_LEFT, PAGE4_VALUES_TOP + 3*PAGE4_VALUES_VERTICAL_STEP, FONTID_6X8M,  " пїЅ.пїЅ.:  %g", RAC);
+		disp1color_printf(PAGE4_VALUES_LEFT, PAGE4_VALUES_TOP + 4*PAGE4_VALUES_VERTICAL_STEP, FONTID_6X8M,  " пїЅпїЅпїЅпїЅпїЅпїЅ: %s", RCat);
 		
 		//Draw choose rectangle
 		disp1color_DrawRectangle(PAGE4_VALUES_LEFT - PAGE4_VALUES_LEFT_RECTANGLES_OFFSET, 
@@ -1179,6 +1180,6 @@ int main()
 			disp1color_printf(PAGE4_VALUES_LEFT - PAGE4_VALUES_LEFT_TRIANGLES_OFFSET, PAGE4_VALUES_TOP + 4*PAGE4_VALUES_VERTICAL_STEP, FONTID_6X8M, "%c", 0x84);
 		
 		
-		//disp1color_printf(100, 54, FONTID_6X8M, "Ввод");
+		//disp1color_printf(100, 54, FONTID_6X8M, "пїЅпїЅпїЅпїЅ");
 		//disp1color_DrawRectangle(97, 51, 125, 63);
 	}
